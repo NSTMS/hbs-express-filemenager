@@ -3,16 +3,100 @@
     <input type="file" multiple required accept="*" name="filetoupload">
     <button type="submit">upload</button>
 </form>
+<button id="showDirDialog">add new folder</button>
+<dialog id="addDir">
+    <input type="text" id="addDirDialogInput" name="addDirDialogInput" value="">
+    <button value="cancel" formmethod="dialog" id="addDirDialogCloseBtn">zamknij</button>
+    <button formmethod="dialog" id="addDirDialogSumbitBtn">dodaj</button>
+</dialog>
 
+<button id="showTxtDialog">add new txt file</button>
+<dialog id="addTxt">
+    <input type="text" id="addTxtDialogInput" name="addTxtDialogInput" value="">
+    <button value="cancel" formmethod="dialog" id="addTxtDialogCloseBtn">zamknij</button>
+    <button formmethod="dialog" id="addTxtDialogSumbitBtn" >dodaj</button>
+</dialog>   
 
-
-{{#each files}}
-<div>
-   {{name}}
+<div class="files">
+    {{#each files}}
+        <div class="file">
+        <form method="GET" action="/file/{{name}}">
+            <button type="submit"><img src={{&img name}} alt="img"></button> 
+        </form>
+        <p>{{name}}</p>
+        <form method="POST" action="/remove">
+            <input type="hidden" name={{&json name}} value={{&json name}}>
+            <button type="submit">x</button> 
+        </form>
+        </div>
+    {{/each}}
 </div>
-{{/each}}
-
 
 <script>
+    const files = {{&json files}}; 
+    console.log(files);
+
+    const addTxt = document.getElementById('addTxt');
+    const showTxtDialog = document.getElementById('showTxtDialog');
+    const addTxtDialogSumbitBtn = document.getElementById('addTxtDialogSumbitBtn');
+    const addTxtDialogCloseBtn = document.getElementById('addTxtDialogCloseBtn');
+    const addTxtDialogInput = document.getElementById('addTxtDialogInput');
+
+
+    const addDir = document.getElementById('addDir');
+    const showDirDialog = document.getElementById('showDirDialog');
+    const addDirDialogSumbitBtn = document.getElementById('addDirDialogSumbitBtn');
+    const addDirDialogCloseBtn = document.getElementById('addDirDialogCloseBtn');
+    const addDirDialogInput = document.getElementById('addDirDialogInput');
+
+
+    showTxtDialog.addEventListener('click', () => {
+        addTxt.showModal();
+    });
+    addTxtDialogCloseBtn.addEventListener('click', () => {
+        addTxt.close();
+    });
+    addTxtDialogSumbitBtn.addEventListener('click', () => {
+       const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"     
+            },
+            body: JSON.stringify({value:addTxtDialogInput.value})
+        };
+        fetch("/upload/txt", options).then(()=>{
+            addTxtDialogInput.value = ""
+            addTxt.close();
+            window.location.reload()
+        }).catch((ex)=>{
+            console.log("coś poszło nie tak : ", ex)
+        }) 
+    });
+
+
+    showDirDialog.addEventListener('click', () => {
+        addDir.showModal();
+    });
+    addDirDialogCloseBtn.addEventListener('click', () => {
+        addDir.close();
+    });
+    addDirDialogSumbitBtn.addEventListener('click', () => {
+        const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"     
+            },
+            body: JSON.stringify({value:addDirDialogInput.value })
+        };
+        fetch("/upload/dir", options).then(()=>{
+            addDirDialogInput.value = ""
+            addDir.close();
+            window.location.reload()
+        }).catch((ex)=>{
+            console.log("coś poszło nie tak : ", ex)
+        }) 
+    });
+
+
 
 </script>

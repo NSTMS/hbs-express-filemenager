@@ -11,7 +11,25 @@ const FILES_DIRECTORY = __dirname + "\\files\\"
 app.set('views', path.join(__dirname, 'views'));
 app.engine('hbs', hbs({
     defaultLayout: 'main.hbs',
-    helpers: {},
+    helpers: {
+        json:  (obj) => {return JSON.stringify(obj)},
+        img: (name) =>{
+            let icons = getAllIcons()
+            const lastIndex = name.lastIndexOf(".")
+            const filepath = path.join(__dirname, "files",name)
+            if(fs.lstatSync(filepath).isDirectory())
+            {
+                return path.join('gfx','icons', "dir.png")
+            }
+            else if(icons.includes(name.slice(lastIndex).toLowerCase()))
+            {
+                return path.join('gfx','icons', name.slice(lastIndex+1).toLowerCase() + ".png")
+            }
+            else{
+                return path.join('gfx','icons', "file.png")
+            }
+        }
+    },
     extname: '.hbs',
     partialsDir: "views/partials"
 }));
@@ -19,6 +37,7 @@ app.set('view engine', 'hbs');
 app.use(express.urlencoded({
     extended: true
 }));
+app.use(express.json());
 
 let context = {
     "title": "filemanager",
@@ -27,6 +46,7 @@ let context = {
 
 app.get("/", function (req, res) {
     context.files = getAllFiles()
+    getAllIcons()
     res.render('hero-page.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
 })
 
@@ -37,9 +57,12 @@ app.post('/upload', function (req, res) {
     form.keepFilenames = true;  
     form.keepExtensions = true;
     form.on ('fileBegin', function(name, file){
-        // add check if file exist bo nie ma tego narazie
-
-        file.path = form.uploadDir + "/" + file.name;
+        file.path = form.uploadDir + (file.name).trim();        
+        while(fs.existsSync(file.path))
+        {
+            const lastIndex = (file.path).lastIndexOf(".")
+            file.path = (file.path).slice(0, lastIndex).trim() + "_kopia" + (file.path).slice(lastIndex) 
+        }
     })
 
     form.parse(req,function (err, fields, files) {
@@ -48,7 +71,6 @@ app.post('/upload', function (req, res) {
         if(Array.isArray(files.filetoupload))
         {
             files.filetoupload.forEach(f =>{
-                console.log(f)
                 context.files.push({
                     name : f.name,
                     type: f.type,
@@ -64,22 +86,52 @@ app.post('/upload', function (req, res) {
             })
         }
     });
-    res.render('hero-page.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
+    res.redirect("/") 
 });
+
+
+app.post("/upload/dir", function (req, res) {
+    const filepath = path.join(__dirname, "files", req.body.value)
+    if (!fs.existsSync(filepath)) {
+        fs.mkdir(filepath, (err) => {
+            if (err) throw err
+            console.log("jest");
+        })
+    }
+    res.redirect("/")
+})
+app.post("/upload/txt", function (req, res) {
+    const filepath = path.join(__dirname, "files", `${(req.body.value).trim()}.txt`)
+    fs.writeFile(filepath, `Nowy dokument tekstowy utworzony: ${new Date(Date.now()).toDateString()}`, (err) => {
+        if (err) throw err
+    })   
+    
+    res.redirect("/")
+})
 
 app.get("/file/:id", function (req, res) {
     let id = req.params.id
-    console.log(id)
-    const files = allFiles()
     const filepath = path.join(__dirname, "files", id)
     if (fs.existsSync(filepath)) {
-        console.log("plik istnieje");
+        const lastIndex = filepath.lastIndexOf(".")
+        res.type(filepath.slice(lastIndex))
+        res.sendFile(filepath)
+        // res.download(filepath) // to ci pobiera pliczek tak jak chcesz
      } else {
          console.log("plik nie istnieje");
+         res.status(404).redirect("/")
      }
+});
 
+app.post("/remove", function (req, res) {
+    let body = req.body
+    const filepath = path.join(__dirname, "files", body[Object.keys(body)[0]])
+    if (fs.existsSync(filepath)) {
+        fs.unlink(filepath,  (err) =>{
+            console.log("deleted");
+        })
+    } 
     res.redirect("/")
-
 });
 
 
@@ -96,6 +148,17 @@ function getAllFiles()
     return response;
 }
 
+function getAllIcons()
+{
+    const filepath = path.join(__dirname, "static",'gfx','icons')
+    const files = fs.readdirSync(filepath);
+    const response = [];
+    for (let file of files) {
+        const lastIndex = file.lastIndexOf(".")
+        response.push("."+ file.slice(0,lastIndex));
+    }
+    return response;
+}
 
 
 app.use(express.static('static'));

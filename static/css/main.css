@@ -6,3 +6,40 @@ body{
     background-color: #d2d2d2;
     color:#2d2d2d;
 }
+
+
+.files{
+    display: grid;
+    place-items:center;
+    grid-template-columns: repeat(auto-fill, 200px);
+    gap:20px;
+    justify-content: center;
+    margin:20px;
+}
+
+.file{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border:1px solid black;
+    gap:20px;
+    padding:10px;
+    width:200px;
+    aspect-ratio: 1;
+    /* overflow: hidden;
+    white-space: nowrap;    
+    text-overflow: ellipsis; */
+}
+.file p{
+    word-break: break-all;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;  
+    overflow: hidden;
+}
+
+.file img{
+    width:60px;
+    aspect-ratio: 1;
+}

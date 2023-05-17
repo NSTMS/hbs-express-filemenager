@@ -16,13 +16,19 @@
     <button value="cancel" formmethod="dialog" id="addTxtDialogCloseBtn">zamknij</button>
     <button formmethod="dialog" id="addTxtDialogSumbitBtn" >dodaj</button>
 </dialog>   
-
+<br>
+<br>
+{{&link link}}
 <div class="files">
     {{#each files}}
         <div class="file">
+        {{#if (isDir name)}}   
+        <a href="{{../link}}{{name}}" ><img src={{&img name}} alt="img"></a>
+        {{else}}
         <form method="GET" action="/file/{{name}}">
             <button type="submit"><img src={{&img name}} alt="img"></button> 
         </form>
+        {{/if}}
         <p>{{name}}</p>
         <form method="POST" action="/remove">
             <input type="hidden" name={{&json name}} value={{&json name}}>

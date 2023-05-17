@@ -15,7 +15,7 @@ app.engine('hbs', hbs({
         img: (name) =>{
             let icons = getAllIcons()
             const lastIndex = name.lastIndexOf(".")
-            const filepath = path.join(__dirname, "files",name)
+            const filepath = path.join(FILES_DIRECTORY,name)
             if(fs.lstatSync(filepath).isDirectory())
             {
                 return path.join('gfx','icons', "dir.png")
@@ -27,6 +27,26 @@ app.engine('hbs', hbs({
             else{
                 return path.join('gfx','icons', "file.png")
             }
+        },
+        link: (link) =>{
+            let route = link
+            if(route.endsWith("/")) route = route.slice(0, -1);
+            let res = ""
+            let prev = ""
+            for(c of route.split("/"))
+            {
+                if(c == "") res += `<a href="/"> home</a> `
+                else{
+                    prev += "/" + c
+                    if(prev.startsWith("/")) prev = prev.slice(1)
+                    res += `/ <a href="/${prev}">${c}</a> `
+                }
+            }
+            return res
+        },   
+        isDir: (name) =>{
+            const filepath = path.join(FILES_DIRECTORY,name)
+            return fs.lstatSync(filepath).isDirectory()
         }
     },
     extname: '.hbs',
@@ -41,11 +61,15 @@ app.use(express.json());
 
 let context = {
     "title": "filemanager",
+    "link":"",
     "files": []
 }
 
+
 app.get("/", function (req, res) {
+    FILES_DIRECTORY = __dirname + "\\files\\"
     context.files = getAllFiles()
+    context.link =""
     getAllIcons()
     res.render('hero-page.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
 })
@@ -111,12 +135,11 @@ app.post("/upload/txt", function (req, res) {
 
 app.get("/file/:id", function (req, res) {
     let id = req.params.id
-    const filepath = path.join(__dirname, "files", id)
+    const filepath = path.join(FILES_DIRECTORY, id)
     if (fs.existsSync(filepath)) {
         const lastIndex = filepath.lastIndexOf(".")
         res.type(filepath.slice(lastIndex))
         res.sendFile(filepath)
-        console.log("otwarto plik")
         // res.download(filepath) // to ci pobiera pliczek tak jak chcesz
      } else {
          console.log("plik nie istnieje");
@@ -136,8 +159,9 @@ app.post("/remove", function (req, res) {
 });
 
 app.get("/*", function (req, res) {
-    if(req.params[0] == "favicon.ico") return;
-    const filepath = path.join(__dirname, "files",req.params[0])
+    const route = req.params[0]
+    if(route == "favicon.ico") return;
+    const filepath = path.join(__dirname, "files",route)
     if(fs.existsSync(filepath))
     {
         const files = fs.readdirSync(filepath, 'utf8');
@@ -147,15 +171,15 @@ app.get("/*", function (req, res) {
             const fileSizeInBytes = fs.statSync(filepath + '/' + file).size;
             response.push({ name: file, "type": extension, "size":fileSizeInBytes });
         }
-        console.log(response)
+        FILES_DIRECTORY = filepath
         context.files = [...response]
-        console.log(context)
-        // getAllIcons()
+        context.link = "/" + route + "/"
         res.render('hero-page.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
         // res.redirect("/")
 
     }
     else{
+        FILES_DIRECTORY = path.join(__dirname, "files")
         res.redirect("/")
     }
 })
@@ -184,7 +208,9 @@ function getAllIcons()
     }
     return response;
 }
-
+// app.get("*", function (req, res) {
+//     res.redirect("/") 
+// })
 
 app.listen(PORT, function () {
     console.log("start serwera na porcie " + PORT)

@@ -1,12 +1,11 @@
 const express = require("express");
-const request = require("request")
 const app = express()
 const PORT = 3000;
 const path = require("path")
 const hbs = require('express-handlebars');
 const fs = require('fs');
 const formidable = require('formidable');
-const FILES_DIRECTORY = __dirname + "\\files\\"
+let FILES_DIRECTORY = __dirname + "\\files\\"
 
 app.set('views', path.join(__dirname, 'views'));
 app.engine('hbs', hbs({
@@ -37,6 +36,7 @@ app.set('view engine', 'hbs');
 app.use(express.urlencoded({
     extended: true
 }));
+app.use(express.static('static'));
 app.use(express.json());
 
 let context = {
@@ -116,6 +116,7 @@ app.get("/file/:id", function (req, res) {
         const lastIndex = filepath.lastIndexOf(".")
         res.type(filepath.slice(lastIndex))
         res.sendFile(filepath)
+        console.log("otwarto plik")
         // res.download(filepath) // to ci pobiera pliczek tak jak chcesz
      } else {
          console.log("plik nie istnieje");
@@ -134,6 +135,30 @@ app.post("/remove", function (req, res) {
     res.redirect("/")
 });
 
+app.get("/*", function (req, res) {
+    if(req.params[0] == "favicon.ico") return;
+    const filepath = path.join(__dirname, "files",req.params[0])
+    if(fs.existsSync(filepath))
+    {
+        const files = fs.readdirSync(filepath, 'utf8');
+        const response = [];
+        for (let file of files) {
+            const extension = path.extname(file);
+            const fileSizeInBytes = fs.statSync(filepath + '/' + file).size;
+            response.push({ name: file, "type": extension, "size":fileSizeInBytes });
+        }
+        console.log(response)
+        context.files = [...response]
+        console.log(context)
+        // getAllIcons()
+        res.render('hero-page.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
+        // res.redirect("/")
+
+    }
+    else{
+        res.redirect("/")
+    }
+})
 
 function getAllFiles()
 {
@@ -161,7 +186,6 @@ function getAllIcons()
 }
 
 
-app.use(express.static('static'));
 app.listen(PORT, function () {
     console.log("start serwera na porcie " + PORT)
 })

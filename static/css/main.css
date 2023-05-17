@@ -27,9 +27,6 @@ body{
     padding:10px;
     width:200px;
     aspect-ratio: 1;
-    /* overflow: hidden;
-    white-space: nowrap;    
-    text-overflow: ellipsis; */
 }
 .file p{
     word-break: break-all;
@@ -42,4 +39,6 @@ body{
 .file img{
     width:60px;
     aspect-ratio: 1;
+    border:none;
+    outline:none;
 }

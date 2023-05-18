@@ -41,7 +41,8 @@
 <script>
     const files = {{&json files}}; 
     console.log(files);
-
+    const link = {{&json link}}
+    console.log(link)
     const addTxt = document.getElementById('addTxt');
     const showTxtDialog = document.getElementById('showTxtDialog');
     const addTxtDialogSumbitBtn = document.getElementById('addTxtDialogSumbitBtn');
@@ -68,7 +69,7 @@
             headers: {
                 "Content-Type": "application/json"     
             },
-            body: JSON.stringify({value:addTxtDialogInput.value})
+            body: JSON.stringify({value:addTxtDialogInput.value, link:link})
         };
         fetch("/upload/txt", options).then(()=>{
             addTxtDialogInput.value = ""
@@ -92,7 +93,7 @@
             headers: {
                 "Content-Type": "application/json"     
             },
-            body: JSON.stringify({value:addDirDialogInput.value })
+            body: JSON.stringify({value:addDirDialogInput.value,link:link})
         };
         fetch("/upload/dir", options).then(()=>{
             addDirDialogInput.value = ""

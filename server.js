@@ -18,14 +18,14 @@ app.engine('hbs', hbs({
             const filepath = path.join(FILES_DIRECTORY,name)
             if(fs.lstatSync(filepath).isDirectory())
             {
-                return path.join('gfx','icons', "dir.png")
+                return "http://localhost:3000/gfx/icons/dir.png"
             }
             else if(icons.includes(name.slice(lastIndex).toLowerCase()))
             {
-                return path.join('gfx','icons', name.slice(lastIndex+1).toLowerCase() + ".png")
+                return "http://localhost:3000/gfx/icons/"+ name.slice(lastIndex+1).toLowerCase() + ".png"
             }
             else{
-                return path.join('gfx','icons', "file.png")
+                return "http://localhost:3000/gfx/icons/file.png"
             }
         },
         link: (link) =>{
@@ -115,26 +115,27 @@ app.post('/upload', function (req, res) {
 
 
 app.post("/upload/dir", function (req, res) {
-    const filepath = path.join(__dirname, "files", req.body.value)
+    const filepath = path.join(FILES_DIRECTORY, req.body.value)
     if (!fs.existsSync(filepath)) {
         fs.mkdir(filepath, (err) => {
             if (err) throw err
-            console.log("jest");
         })
+        console.log("jest");
     }
-    res.redirect("/")
+    res.redirect(req.body.link)
 })
 app.post("/upload/txt", function (req, res) {
-    const filepath = path.join(__dirname, "files", `${(req.body.value).trim()}.txt`)
-    fs.writeFile(filepath, `Nowy dokument tekstowy utworzony: ${new Date(Date.now()).toDateString()}`, (err) => {
-        if (err) throw err
-    })   
-    
-    res.redirect("/")
+    const filepath = path.join(FILES_DIRECTORY, `${(req.body.value).trim()}.txt`)
+    if (!fs.existsSync(filepath)) {
+        fs.writeFile(filepath, `Nowy dokument tekstowy utworzony: ${new Date(Date.now()).toDateString()}`, (err) => {
+            if (err) throw err
+        })   
+    }
+    res.redirect(req.body.link)
 })
 
 app.get("/file/:id", function (req, res) {
-    let id = req.params.id
+    const id = req.params.id
     const filepath = path.join(FILES_DIRECTORY, id)
     if (fs.existsSync(filepath)) {
         const lastIndex = filepath.lastIndexOf(".")

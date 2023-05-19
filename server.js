@@ -7,6 +7,9 @@ const fs = require('fs');
 const formidable = require('formidable');
 let FILES_DIRECTORY = __dirname + "\\files\\"
 
+// po cofnięciu strzałkami w window nie zmienia sie FILEPATH
+
+
 app.set('views', path.join(__dirname, 'views'));
 app.engine('hbs', hbs({
     defaultLayout: 'main.hbs',
@@ -70,7 +73,8 @@ app.use(express.json());
 let context = {
     "title": "filemanager",
     "link":"",
-    "files": []
+    "files": [],
+    "fileTypes": `".txt",".css",".py",".html",".docx",".xml",".json",".csv",".cpp",".h",".c",".cs",".java",".hbs",".js",".jsx",".php"`
 }
 
 
@@ -98,8 +102,6 @@ app.post('/upload', function (req, res) {
     })
 
     form.parse(req,function (err, fields, files) {
-   
-        console.log("-----------------")
         if(Array.isArray(files.filetoupload))
         {
             files.filetoupload.forEach(f =>{
@@ -118,17 +120,16 @@ app.post('/upload', function (req, res) {
             })
         }
     });
-    let link = FILES_DIRECTORY.replace(path.join(__dirname, "files"),"").replace("\\","/")
-    res.redirect(link) 
+    let link = FILES_DIRECTORY.replace(path.join(__dirname, "files"),"")
+
+    setTimeout(()=>res.redirect(link.replaceAll("\\","/")))
+     
 });
 
-app.post("/changeDir", function (req, res) {
-    FILES_DIRECTORY = req.body.link
-    console.log(FILES_DIRECTORY)
-    res.redirect(req.body.link)
-})
 app.post("/upload/dir", function (req, res) {
+    console.log(path.join(FILES_DIRECTORY, req.body.value))
     const filepath = path.join(FILES_DIRECTORY, req.body.value)
+    
     if (!fs.existsSync(filepath)) {
         fs.mkdir(filepath, (err) => {
             if (err) throw err
@@ -136,17 +137,23 @@ app.post("/upload/dir", function (req, res) {
         console.log("jest");
     }
     // dodaj tutaj obsłużenie wyjatku jeśli plik istnieje
-    res.redirect((req.body.link).replace("\\","/"))
+    res.redirect((req.body.link).replaceAll("\\","/"))
 })
 app.post("/upload/txt", function (req, res) {
-    const filepath = path.join(FILES_DIRECTORY, `${(req.body.value).trim()}.txt`)
+    const lastIndex = req.body.value.lastIndexOf(".")
+    const predefindedExtensions = [".txt",".css",".py",".html",".docx",".xml",".json",".csv",".cpp",".h",".c",".cs",".java",".hbs",".js",".jsx",".php"]
+    let filepath = ""
+    if(predefindedExtensions.includes(req.body.value.slice(lastIndex))) filepath = path.join(FILES_DIRECTORY, (req.body.value).trim())
+    else filepath = path.join(FILES_DIRECTORY, `${(req.body.value).trim()}.txt`)
+    console.log(filepath)
+
     if (!fs.existsSync(filepath)) {
-        fs.writeFile(filepath, `Nowy dokument tekstowy utworzony: ${new Date(Date.now()).toDateString()}`, (err) => {
+        fs.writeFile(filepath, `${new Date(Date.now())}`, (err) => {
             if (err) throw err
         })   
     }
     // dodaj tutaj obsłużenie wyjatku jeśli plik istnieje
-    res.redirect((req.body.link).replace("\\","/"))
+    res.redirect((req.body.link).replaceAll("\\","/"))
 })
 
 app.get("/file/:id", function (req, res) {

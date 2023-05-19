@@ -1,8 +1,6 @@
 {{title}}
 <form enctype="multipart/form-data" method="POST" action="/upload">
     <input type="file" multiple required accept="*" name="filetoupload">
-    {{!-- <input type="hidden" name={{&json link}} value={{&json link}}> --}}
-
     <button type="submit">upload</button>
 </form>
 <button id="showDirDialog">add new folder</button>
@@ -15,6 +13,7 @@
 <button id="showTxtDialog">add new txt file</button>
 <dialog id="addTxt">
     <input type="text" id="addTxtDialogInput" name="addTxtDialogInput" value="">
+    <p>dostepne typy: {{fileTypes}}</p>
     <button value="cancel" formmethod="dialog" id="addTxtDialogCloseBtn">zamknij</button>
     <button formmethod="dialog" id="addTxtDialogSumbitBtn" >dodaj</button>
 </dialog>   

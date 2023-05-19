@@ -11,12 +11,16 @@ app.set('views', path.join(__dirname, 'views'));
 app.engine('hbs', hbs({
     defaultLayout: 'main.hbs',
     helpers: {
-        json:  (obj) => {return JSON.stringify(obj)},
+        json:  (obj) => {return obj.link},
         img: (name) =>{
             let icons = getAllIcons()
             const lastIndex = name.lastIndexOf(".")
             const filepath = path.join(FILES_DIRECTORY,name)
-            if(fs.lstatSync(filepath).isDirectory())
+            if(!fs.existsSync(filepath))
+            {
+                return;
+            }
+            else if(fs.lstatSync(filepath).isDirectory())
             {
                 return "http://localhost:3000/gfx/icons/dir.png"
             }
@@ -46,6 +50,10 @@ app.engine('hbs', hbs({
         },   
         isDir: (name) =>{
             const filepath = path.join(FILES_DIRECTORY,name)
+            if(!fs.existsSync(filepath))
+            {
+                return;
+            }
             return fs.lstatSync(filepath).isDirectory()
         }
     },
@@ -77,11 +85,12 @@ app.get("/", function (req, res) {
 app.post('/upload', function (req, res) {
     let form = formidable.IncomingForm();
     form.uploadDir = FILES_DIRECTORY  
+    console.log(FILES_DIRECTORY)
     form.multiples = true;
     form.keepFilenames = true;  
     form.keepExtensions = true;
     form.on ('fileBegin', function(name, file){
-        file.path = form.uploadDir + (file.name).trim();        
+        file.path = path.join(FILES_DIRECTORY ,(file.name).trim());        
         while(fs.existsSync(file.path))
         {
             const lastIndex = (file.path).lastIndexOf(".")
@@ -110,10 +119,15 @@ app.post('/upload', function (req, res) {
             })
         }
     });
-    res.redirect("/") 
+    let link = FILES_DIRECTORY.replace(path.join(__dirname, "files"),"").replace("\\","/")
+    res.redirect(link) 
 });
 
-
+app.post("/changeDir", function (req, res) {
+    FILES_DIRECTORY = req.body.link
+    console.log(FILES_DIRECTORY)
+    res.redirect(req.body.link)
+})
 app.post("/upload/dir", function (req, res) {
     const filepath = path.join(FILES_DIRECTORY, req.body.value)
     if (!fs.existsSync(filepath)) {

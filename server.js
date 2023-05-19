@@ -11,7 +11,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.engine('hbs', hbs({
     defaultLayout: 'main.hbs',
     helpers: {
-        json:  (obj) => {return obj.link},
+        json:  (obj) => {return JSON.stringify(obj)},
         img: (name) =>{
             let icons = getAllIcons()
             const lastIndex = name.lastIndexOf(".")
@@ -84,8 +84,7 @@ app.get("/", function (req, res) {
 
 app.post('/upload', function (req, res) {
     let form = formidable.IncomingForm();
-    form.uploadDir = FILES_DIRECTORY  
-    console.log(FILES_DIRECTORY)
+    form.uploadDir = FILES_DIRECTORY;
     form.multiples = true;
     form.keepFilenames = true;  
     form.keepExtensions = true;
@@ -136,7 +135,8 @@ app.post("/upload/dir", function (req, res) {
         })
         console.log("jest");
     }
-    res.redirect(req.body.link)
+    // dodaj tutaj obsłużenie wyjatku jeśli plik istnieje
+    res.redirect((req.body.link).replace("\\","/"))
 })
 app.post("/upload/txt", function (req, res) {
     const filepath = path.join(FILES_DIRECTORY, `${(req.body.value).trim()}.txt`)
@@ -145,7 +145,8 @@ app.post("/upload/txt", function (req, res) {
             if (err) throw err
         })   
     }
-    res.redirect(req.body.link)
+    // dodaj tutaj obsłużenie wyjatku jeśli plik istnieje
+    res.redirect((req.body.link).replace("\\","/"))
 })
 
 app.get("/file/:id", function (req, res) {
@@ -191,7 +192,6 @@ app.get("/*", function (req, res) {
         context.link = "/" + route + "/"
         res.render('hero-page.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
         // res.redirect("/")
-
     }
     else{
         FILES_DIRECTORY = path.join(__dirname, "files")

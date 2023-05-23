@@ -174,10 +174,28 @@ app.post("/remove", function (req, res) {
     let body = req.body
     const filepath = path.join(__dirname, "files", body[Object.keys(body)[0]])
     if (fs.existsSync(filepath)) {
-        fs.unlink(filepath,  (err) =>{
-            console.log("deleted");
-        })
-    } 
+        if(fs.lstatSync(filepath).isDirectory())
+        {
+            fs.readdir(filepath, (err, files) => {
+                if (err) throw err;
+                for (const file of files) {
+                  fs.unlink(path.join(filepath, file), (err) => {
+                    if (err) throw err;
+                  });
+                }
+              });
+            
+            fs.rmdir(filepath, (err) => {
+                if (err) throw err
+                console.log("nie ma ");
+            })
+        }
+        else{
+            fs.unlink(filepath,  (err) =>{
+                console.log("deleted");
+            })
+        }
+    }
     res.redirect("/")
 });
 

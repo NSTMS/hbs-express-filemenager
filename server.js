@@ -6,7 +6,7 @@ const hbs = require('express-handlebars');
 const fs = require('fs');
 const formidable = require('formidable');
 let FILES_DIRECTORY = __dirname + "\\files\\"
-
+const DIRECTORY = path.join(__dirname, "files")
 // po cofnięciu strzałkami w window nie zmienia sie FILEPATH
 
 
@@ -127,9 +127,7 @@ app.post('/upload', function (req, res) {
 });
 
 app.post("/upload/dir", function (req, res) {
-    console.log(path.join(FILES_DIRECTORY, req.body.value))
-    const filepath = path.join(FILES_DIRECTORY, req.body.value)
-    
+    const filepath = path.join(FILES_DIRECTORY, req.body.value)    
     if (!fs.existsSync(filepath)) {
         fs.mkdir(filepath, (err) => {
             if (err) throw err
@@ -156,6 +154,15 @@ app.post("/upload/txt", function (req, res) {
     res.redirect((req.body.link).replaceAll("\\","/"))
 })
 
+app.get("/file", function(req,res){
+    let link = req.query.link
+    const name = req.query.name
+    link = link.slice(0, link.lastIndexOf("/"))
+    console.log(path.join(DIRECTORY, link, name))
+    res.redirect((link)? link : "/")
+})
+
+
 app.get("/file/:id", function (req, res) {
     const id = req.params.id
     const filepath = path.join(FILES_DIRECTORY, id)
@@ -163,32 +170,22 @@ app.get("/file/:id", function (req, res) {
         const lastIndex = filepath.lastIndexOf(".")
         res.type(filepath.slice(lastIndex))
         res.sendFile(filepath)
-        // res.download(filepath) // to ci pobiera pliczek tak jak chcesz
      } else {
          console.log("plik nie istnieje");
          res.status(404).redirect("/")
      }
 });
 
+
+
+
 app.post("/remove", function (req, res) {
     let body = req.body
-    const filepath = path.join(__dirname, "files", body[Object.keys(body)[0]])
+    const filepath = path.join(DIRECTORY, body.link, body.name)
     if (fs.existsSync(filepath)) {
         if(fs.lstatSync(filepath).isDirectory())
         {
-            fs.readdir(filepath, (err, files) => {
-                if (err) throw err;
-                for (const file of files) {
-                  fs.unlink(path.join(filepath, file), (err) => {
-                    if (err) throw err;
-                  });
-                }
-              });
-            
-            fs.rmdir(filepath, (err) => {
-                if (err) throw err
-                console.log("nie ma ");
-            })
+            removeFilesFromDir(filepath)
         }
         else{
             fs.unlink(filepath,  (err) =>{
@@ -196,8 +193,27 @@ app.post("/remove", function (req, res) {
             })
         }
     }
-    res.redirect("/")
+    const link = body.link.slice(0, body.link.lastIndexOf("/"))
+
+    res.redirect(link)
 });
+
+
+const removeFilesFromDir = (dir) =>{
+    //doesnt work
+    if (fs.existsSync(path)) {
+        const files = fs.readdirSync(path);
+        for(const file of files)
+        {
+            const curPath = path.join(dir, file)
+            if (fs.lstatSync(curPath).isDirectory()) {
+                removeFilesFromDir(curPath);
+              } else {
+                fs.unlinkSync(curPath);
+              }
+        }
+    }
+} 
 
 app.get("/*", function (req, res) {
     const route = req.params[0]

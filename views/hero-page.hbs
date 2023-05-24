@@ -26,15 +26,25 @@
         {{#if (isDir name)}}   
         <a href="{{../link}}{{name}}" ><img src={{&img name}} alt="img"></a>
         {{else}}
-        <form method="GET" action="/file/{{name}}">
+        {{!-- <form method="GET" action="/file/{{name}}"> --}}
+        <form method="GET" action="/file">
+            <input type="hidden" name="link" value={{../link}}>
+            <input type="hidden" name="name" value={{&json name}}>
             <button type="submit"><img src={{&img name}} alt="img"></button> 
         </form>
         {{/if}}
         <p>{{name}}</p>
-        <form method="POST" action="/remove">
+        <div class="buttons">
+        <form method="POST" action="/editName">
             <input type="hidden" name={{&json name}} value={{&json name}}>
+            <button type="submit">edit</button> 
+        </form>
+        <form method="POST" action="/remove">
+            <input type="hidden" name="link" value={{../link}}>
+            <input type="hidden" name="name" value={{&json name}}>
             <button type="submit">x</button> 
         </form>
+        </div>
         </div>
     {{/each}}
 </div>

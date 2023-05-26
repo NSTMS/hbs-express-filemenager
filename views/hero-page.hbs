@@ -23,8 +23,8 @@
 <div class="files">
     {{#each files}}
         <div class="file">
-        {{#if (isDir name)}}   
-        <a href="{{../link}}{{name}}" ><img src={{&img name}} alt="img"></a>
+        {{#if (isDir ../link name)}}   
+        <a href="{{../link}}{{name}}" ><img src={{&img (../link name)}} alt="img"></a>
         {{else}}
         {{!-- <form method="GET" action="/file/{{name}}"> --}}
         <form method="GET" action="/file">

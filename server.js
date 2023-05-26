@@ -5,7 +5,6 @@ const path = require("path")
 const hbs = require('express-handlebars');
 const fs = require('fs');
 const formidable = require('formidable');
-let FILES_DIRECTORY = __dirname + "\\files\\"
 const DIRECTORY = path.join(__dirname, "files")
 // po cofnięciu strzałkami w window nie zmienia sie FILEPATH
 
@@ -15,10 +14,11 @@ app.engine('hbs', hbs({
     defaultLayout: 'main.hbs',
     helpers: {
         json:  (obj) => {return JSON.stringify(obj)},
-        img: (name) =>{
+        img: (link,name) =>{
             let icons = getAllIcons()
+            console.log(name)
             const lastIndex = name.lastIndexOf(".")
-            const filepath = path.join(FILES_DIRECTORY,name)
+            const filepath = path.join(DIRECTORY,link, name)
             if(!fs.existsSync(filepath))
             {
                 return;
@@ -35,30 +35,28 @@ app.engine('hbs', hbs({
                 return "http://localhost:3000/gfx/icons/file.png"
             }
         },
-        link: (link) =>{
-            let route = link
-            if(route.endsWith("/")) route = route.slice(0, -1);
-            let res = ""
-            let prev = ""
-            for(c of route.split("/"))
-            {
-                if(c == "") res += `<a href="/"> home</a> `
-                else{
-                    prev += "/" + c
-                    if(prev.startsWith("/")) prev = prev.slice(1)
-                    res += `/ <a href="/${prev}">${c}</a> `
-                }
+        link: (link) => {
+            let route = link;
+            if (route.endsWith("/")) route = route.slice(0, -1);
+            let res = "";
+            let prev = "";
+            for (c of route.split("/")) {
+              if (c == "") res += `<a href="/"> home</a> `;
+              else {
+                prev += "/" + c;
+                if (prev.startsWith("/")) prev = prev.slice(1);
+                res += `/ <a href="/${prev}">${c}</a> `;
+              }
             }
-            return res
-        },   
-        isDir: (name) =>{
-            const filepath = path.join(FILES_DIRECTORY,name)
-            if(!fs.existsSync(filepath))
-            {
-                return;
+            return res;
+          }, 
+        isDir: (link, name) => {
+            const filepath = path.join(DIRECTORY,link, name);
+            if (!fs.existsSync(filepath)) {
+              return false;
             }
-            return fs.lstatSync(filepath).isDirectory()
-        }
+            return fs.lstatSync(filepath).isDirectory();
+          }
     },
     extname: '.hbs',
     partialsDir: "views/partials"
@@ -127,7 +125,7 @@ app.post('/upload', function (req, res) {
 });
 
 app.post("/upload/dir", function (req, res) {
-    const filepath = path.join(FILES_DIRECTORY, req.body.value)    
+    const filepath = path.join(DIRECTORY, req.body.link, req.body.value)    
     if (!fs.existsSync(filepath)) {
         fs.mkdir(filepath, (err) => {
             if (err) throw err
@@ -141,8 +139,8 @@ app.post("/upload/txt", function (req, res) {
     const lastIndex = req.body.value.lastIndexOf(".")
     const predefindedExtensions = [".txt",".css",".py",".html",".docx",".xml",".json",".csv",".cpp",".h",".c",".cs",".java",".hbs",".js",".jsx",".php"]
     let filepath = ""
-    if(predefindedExtensions.includes(req.body.value.slice(lastIndex))) filepath = path.join(FILES_DIRECTORY, (req.body.value).trim())
-    else filepath = path.join(FILES_DIRECTORY, `${(req.body.value).trim()}.txt`)
+    if(predefindedExtensions.includes(req.body.value.slice(lastIndex))) filepath = path.join(DIRECTORY, req.body.link, (req.body.value).trim())
+    else filepath = path.join(DIRECTORY, req.body.link, `${(req.body.value).trim()}.txt`)
     console.log(filepath)
 
     if (!fs.existsSync(filepath)) {
@@ -228,16 +226,12 @@ app.get("/*", function (req, res) {
             const fileSizeInBytes = fs.statSync(filepath + '/' + file).size;
             response.push({ name: file, "type": extension, "size":fileSizeInBytes });
         }
-        FILES_DIRECTORY = filepath
         context.files = [...response]
         context.link = "/" + route + "/"
         res.render('hero-page.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
         // res.redirect("/")
     }
-    else{
-        FILES_DIRECTORY = path.join(__dirname, "files")
-        res.redirect("/")
-    }
+    else res.redirect("/") 
 })
 
 function getAllFiles()

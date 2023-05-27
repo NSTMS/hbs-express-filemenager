@@ -5,7 +5,88 @@ const path = require("path")
 const hbs = require('express-handlebars');
 const fs = require('fs');
 const formidable = require('formidable');
-const DIRECTORY = path.join(__dirname, "files")
+const DEFAULT_DIRECTORY = path.join(__dirname, "files")
+let CURRENT_DIRECTORY = path.join(__dirname, "files")
+const THEMES = [{
+  fg:"#fcfcfc",
+  bg:"#343a40"
+}
+, 
+{
+  fg:"#343a40",
+  bg:"#fcfcfc"
+},
+{
+  fg:"#fcfcfc",
+  bg:"#c1121f"
+}
+,
+{
+  fg:"#ffb33a",
+  bg:"#3a86ff"
+}]
+
+let FONT_SIZE = 16
+let CURRENT_THEME = 0
+
+
+const DEFAULT_FILE_CONTENT = {
+  ".txt": `New txt file : ${new Date(Date.now())}`,
+  ".css": `
+    body:{
+      margin:0;padding;0;box-sizing:border-box;
+    }
+  `,
+  ".py": `print('hello world')`,
+  ".html":`
+  <!DOCTYPE html>
+  <html lang="pl-PL">
+  <head>
+      <meta charset="UTF-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Document</title>
+  </head>
+  <body>
+    <h2>HELLO WORLD</h2>
+  </body>
+  </html>
+  `,
+  ".docx": `New docx file : ${new Date(Date.now())}`,
+  ".xml":`<?xml version="1.0" encoding="UTF-8"?>
+  <root>
+    <message>Hello, World!</message>
+  </root>`,
+  ".json":`{
+    "message": "Hello, World!"
+  }`,
+  ".cpp":`
+    #include <iostream>
+    using namespace std;
+    int main() {
+        cout << "Hello World!";
+        return 0;
+    }
+    `,
+  ".hbs":{
+    
+  },
+  ".js":`console.log("Hello world")`,
+  ".jsx":
+  `
+  import React from 'react';
+
+function HelloWorld() {
+  return (
+    <div>
+      <h1>Hello, World!</h1>
+    </div>
+  );
+}
+
+export default HelloWorld;`,
+}
+
 // po cofnięciu strzałkami w window nie zmienia sie FILEPATH
 
 
@@ -14,30 +95,24 @@ app.engine('hbs', hbs({
     defaultLayout: 'main.hbs',
     helpers: {
         json:  (obj) => {return JSON.stringify(obj)},
-        img: (link,name) =>{
-            let icons = getAllIcons()
-            console.log(name)
-            const lastIndex = name.lastIndexOf(".")
-            const filepath = path.join(DIRECTORY,link, name)
-            if(!fs.existsSync(filepath))
-            {
-                return;
+        img: (link,name) => {
+            let icons = getAllIcons();
+            const lastIndex = name.lastIndexOf(".");
+            const filepath = path.join(DEFAULT_DIRECTORY, link, name);
+            if (!fs.existsSync(filepath)) {
+              return;
+            } else if (fs.lstatSync(filepath).isDirectory()) {
+              return "http://localhost:3000/gfx/icons/dir.png";
+            } else if (icons.includes(name.slice(lastIndex).toLowerCase())) {
+              return "http://localhost:3000/gfx/icons/" + name.slice(lastIndex + 1).toLowerCase() + ".png";
+            } else {
+              return "http://localhost:3000/gfx/icons/file.png";
             }
-            else if(fs.lstatSync(filepath).isDirectory())
-            {
-                return "http://localhost:3000/gfx/icons/dir.png"
-            }
-            else if(icons.includes(name.slice(lastIndex).toLowerCase()))
-            {
-                return "http://localhost:3000/gfx/icons/"+ name.slice(lastIndex+1).toLowerCase() + ".png"
-            }
-            else{
-                return "http://localhost:3000/gfx/icons/file.png"
-            }
-        },
+          },
         link: (link) => {
-            let route = link;
+            let route = link.replaceAll("\\","/");
             if (route.endsWith("/")) route = route.slice(0, -1);
+            CURRENT_DIRECTORY = path.join(DEFAULT_DIRECTORY, route)
             let res = "";
             let prev = "";
             for (c of route.split("/")) {
@@ -50,8 +125,8 @@ app.engine('hbs', hbs({
             }
             return res;
           }, 
-        isDir: (link, name) => {
-            const filepath = path.join(DIRECTORY,link, name);
+          isDir: (link, name) => {
+            const filepath = path.join(DEFAULT_DIRECTORY, link, name);
             if (!fs.existsSync(filepath)) {
               return false;
             }
@@ -77,55 +152,32 @@ let context = {
 
 
 app.get("/", function (req, res) {
-    FILES_DIRECTORY = __dirname + "\\files\\"
-    context.files = getAllFiles()
+    context.files = getAllFiles("/")
     context.link =""
     getAllIcons()
-    res.render('hero-page.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
+    res.render('files-view.hbs', context); 
 })
 
 app.post('/upload', function (req, res) {
     let form = formidable.IncomingForm();
-    form.uploadDir = FILES_DIRECTORY;
+    form.uploadDir = CURRENT_DIRECTORY
     form.multiples = true;
     form.keepFilenames = true;  
     form.keepExtensions = true;
     form.on ('fileBegin', function(name, file){
-        file.path = path.join(FILES_DIRECTORY ,(file.name).trim());        
-        while(fs.existsSync(file.path))
-        {
-            const lastIndex = (file.path).lastIndexOf(".")
-            file.path = (file.path).slice(0, lastIndex).trim() + "_kopia" + (file.path).slice(lastIndex) 
-        }
+      // console.log(name, req.body.link)
+        file.path = path.join(CURRENT_DIRECTORY ,(file.name).trim());        
+        whilePathExist(file.path)
     })
-
-    form.parse(req,function (err, fields, files) {
-        if(Array.isArray(files.filetoupload))
-        {
-            files.filetoupload.forEach(f =>{
-                context.files.push({
-                    name : f.name,
-                    type: f.type,
-                    size  : f.size
-                })
-            })
-        }
-        else{
-            context.files.push({
-                name : files.filetoupload.name,
-                type: files.filetoupload.type,
-                size  : files.filetoupload.size
-            })
-        }
-    });
-    let link = FILES_DIRECTORY.replace(path.join(__dirname, "files"),"")
-
-    setTimeout(()=>res.redirect(link.replaceAll("\\","/")))
-     
+    form.parse(req,function (err, fields, files) {});
+    let link = CURRENT_DIRECTORY.replace(DEFAULT_DIRECTORY,"")
+    res.redirect(link.replaceAll("\\","/"))     
 });
 
+
+
 app.post("/upload/dir", function (req, res) {
-    const filepath = path.join(DIRECTORY, req.body.link, req.body.value)    
+    const filepath = path.join(DEFAULT_DIRECTORY, req.body.link, req.body.value)    
     if (!fs.existsSync(filepath)) {
         fs.mkdir(filepath, (err) => {
             if (err) throw err
@@ -139,47 +191,67 @@ app.post("/upload/txt", function (req, res) {
     const lastIndex = req.body.value.lastIndexOf(".")
     const predefindedExtensions = [".txt",".css",".py",".html",".docx",".xml",".json",".csv",".cpp",".h",".c",".cs",".java",".hbs",".js",".jsx",".php"]
     let filepath = ""
-    if(predefindedExtensions.includes(req.body.value.slice(lastIndex))) filepath = path.join(DIRECTORY, req.body.link, (req.body.value).trim())
-    else filepath = path.join(DIRECTORY, req.body.link, `${(req.body.value).trim()}.txt`)
-    console.log(filepath)
-
-    if (!fs.existsSync(filepath)) {
-        fs.writeFile(filepath, `${new Date(Date.now())}`, (err) => {
-            if (err) throw err
-        })   
+    if(predefindedExtensions.includes(req.body.value.slice(lastIndex))) filepath = path.join(DEFAULT_DIRECTORY, req.body.link, (req.body.value).trim())
+    else filepath = path.join(DEFAULT_DIRECTORY, req.body.link, `${(req.body.value).trim()}.txt`)
+    let data = ""
+    if(Object.keys(DEFAULT_FILE_CONTENT).includes(req.body.value.slice(lastIndex)))
+    {
+      data = DEFAULT_FILE_CONTENT[req.body.value.slice(lastIndex)]
     }
-    // dodaj tutaj obsłużenie wyjatku jeśli plik istnieje
+    filepath = whilePathExist(filepath)
+    fs.writeFile(filepath, data, (err) => {
+        if (err) throw err
+    })   
     res.redirect((req.body.link).replaceAll("\\","/"))
 })
 
-app.get("/file", function(req,res){
-    let link = req.query.link
-    const name = req.query.name
-    link = link.slice(0, link.lastIndexOf("/"))
-    console.log(path.join(DIRECTORY, link, name))
-    res.redirect((link)? link : "/")
+app.post("/file", function(req,res){
+    let body = req.body
+    let link = body.link
+    const name = body.name
+    const filepath = path.join(DEFAULT_DIRECTORY, link, name)
+    const lastIndex = name.lastIndexOf(".")
+    const imagesExtension = ['.png','.jpeg','.jpg','.webp']
+    if(imagesExtension.includes(name.slice(lastIndex)))
+    {
+      res.render("image-view.hbs", {
+        name : name,
+        src : filepath
+      })
+    }
+    else{
+      const data = fs.readFileSync(filepath, 'utf8');
+      res.render("editor-view.hbs",{
+        name : name,
+        content: data,
+        themes : THEMES
+      })
+    }
+    // link = link.slice(0, link.lastIndexOf("/"))
+    // res.redirect((link)? link : "/")
+})
+app.post('/getEditorSettings', function (req, res) {
+  res.status(200).send(JSON.stringify({theme:THEMES[CURRENT_THEME], fontSize: FONT_SIZE}));
 })
 
+app.post('/changeFontSize', function (req, res) {
+  FONT_SIZE += req.body.value
+  if(FONT_SIZE <=0 ) FONT_SIZE = 1
+  res.status(200).send(JSON.stringify({fontSize: FONT_SIZE}))
+})
+app.post('/saveThemeChange', function (req, res) {
+  CURRENT_THEME++
+  if(CURRENT_THEME >= 4) CURRENT_THEME = 0
+  res.status(200)
+})
 
-app.get("/file/:id", function (req, res) {
-    const id = req.params.id
-    const filepath = path.join(FILES_DIRECTORY, id)
-    if (fs.existsSync(filepath)) {
-        const lastIndex = filepath.lastIndexOf(".")
-        res.type(filepath.slice(lastIndex))
-        res.sendFile(filepath)
-     } else {
-         console.log("plik nie istnieje");
-         res.status(404).redirect("/")
-     }
-});
-
-
-
+app.post("saveEditorsSettings", function (req, res) {
+  
+})
 
 app.post("/remove", function (req, res) {
     let body = req.body
-    const filepath = path.join(DIRECTORY, body.link, body.name)
+    const filepath = path.join(DEFAULT_DIRECTORY, body.link, body.name)
     if (fs.existsSync(filepath)) {
         if(fs.lstatSync(filepath).isDirectory())
         {
@@ -192,15 +264,14 @@ app.post("/remove", function (req, res) {
         }
     }
     const link = body.link.slice(0, body.link.lastIndexOf("/"))
-
     res.redirect(link)
 });
 
 
 const removeFilesFromDir = (dir) =>{
     //doesnt work
-    if (fs.existsSync(path)) {
-        const files = fs.readdirSync(path);
+    if (fs.existsSync(dir)) {
+        const files = fs.readdirSync(dir);
         for(const file of files)
         {
             const curPath = path.join(dir, file)
@@ -216,27 +287,19 @@ const removeFilesFromDir = (dir) =>{
 app.get("/*", function (req, res) {
     const route = req.params[0]
     if(route == "favicon.ico") return;
-    const filepath = path.join(__dirname, "files",route)
+    const filepath = path.join(DEFAULT_DIRECTORY,route)
     if(fs.existsSync(filepath))
     {
-        const files = fs.readdirSync(filepath, 'utf8');
-        const response = [];
-        for (let file of files) {
-            const extension = path.extname(file);
-            const fileSizeInBytes = fs.statSync(filepath + '/' + file).size;
-            response.push({ name: file, "type": extension, "size":fileSizeInBytes });
-        }
-        context.files = [...response]
+        context.files =getAllFiles(route)
         context.link = "/" + route + "/"
-        res.render('hero-page.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
-        // res.redirect("/")
+        res.render('files-view.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
     }
     else res.redirect("/") 
 })
 
-function getAllFiles()
+function getAllFiles(dir)
 {
-    const filepath = path.join(__dirname, "files")
+    const filepath = path.join(DEFAULT_DIRECTORY, dir)
     const files = fs.readdirSync(filepath, 'utf8');
     const response = [];
     for (let file of files) {
@@ -257,6 +320,14 @@ function getAllIcons()
         response.push("."+ file.slice(0,lastIndex));
     }
     return response;
+}
+function whilePathExist(filepath){
+  while(fs.existsSync(filepath))
+  {
+      const lastIndex = (filepath).lastIndexOf(".")
+      filepath = (filepath).slice(0, lastIndex).trim() + "_kopia" + (filepath).slice(lastIndex) 
+  }
+  return filepath
 }
 // app.get("*", function (req, res) {
 //     res.redirect("/") 

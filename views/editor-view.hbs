@@ -1,0 +1,145 @@
+{{name}}
+<div class="action-buttons">
+        <div class="theme-buttons">
+            <button id="font-size-dec">font -</button>
+            <button id="theme-change">theme change</button>
+            <button id="font-size-inc">font +</button>
+        </div>
+        <button id="saveSettings">zapisz ustawienia</button> 
+
+        <form method="POST" action="/editName">
+            <input type="hidden" name="name" value="{{name}}">
+            <input type="hidden" name="link" value="{{../link}}">
+            <button type="submit">zmien nazwe</button> 
+        </form>
+        <form method="POST" action="/editName">
+            <input type="hidden" name="name" value="{{name}}">
+            <button type="submit">podglad pliku</button> 
+        </form>
+</div>
+<div class="editor" id="editor">
+    <div class="editor-area">
+        <div id="line-numbers"></div>
+        <textarea name="textarea" id="textarea">{{content}}</textarea>
+    </div>
+    <form method="POST" action="/editName">
+        <input type="hidden" name="name" value="{{name}}">
+        <button type="submit">zapisz zmiany</button> 
+    </form>
+</div>
+
+
+<script>
+    let fontSize = ""; 
+    let theme = 0
+    const THEMES = "{{THEMES}}"
+    console.log(THEMES)
+
+    const getLines = () =>{
+        numbers.innerHTML = ""
+            area.value.split("\n").forEach((line,i)=>{
+                numbers.innerHTML += `<span>${i+1}</span>`
+        })
+    }
+
+    const area = document.getElementById("textarea")
+    const numbers = document.getElementById("line-numbers")
+    const decFontSize = document.getElementById("font-size-dec")
+    const incFontSize = document.getElementById("font-size-inc")
+    const changeTheme = document.getElementById("theme-change")
+    const saveSettings =  document.getElementById("saveSettings")
+
+    saveSettings.addEventListener("click", (event) => {
+        const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"     
+            },
+            body: JSON.stringify({fontSize: fontSize, theme: theme})
+        };
+        fetch("/saveEditorsSettings", options).catch(ex => {
+            console.log("Coś poszło nie tak:", ex);
+        });
+    });
+
+     decFontSize.addEventListener("click", (event) => {
+        setFontSizeAndTheme()
+    });
+     incFontSize.addEventListener("click", (event) => {
+        area.style.fontSize = data.fontSize + "px";
+        numbers.style.fontSize = data.fontSize + "px";
+    });
+     changeTheme.addEventListener("click", (event) => {
+         
+    });
+
+
+
+    window.addEventListener("load", (event) => {
+        const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"     
+            },
+        };
+      fetch("/getEditorSettings", options)
+        .then(res => res.json()) // Użyj res.text() dla prostej odpowiedzi tekstowej
+        .then(data => {
+            setFontSizeAndTheme(data.fontSize, data.theme)
+        })
+        .catch(ex => {
+            console.log("Coś poszło nie tak:", ex);
+        });
+        getLines()
+    });
+    area.onkeyup = function () {
+        getLines()
+    }
+
+    function setFontSizeAndTheme(fontSize, theme)
+    {
+        area.style.fontSize = fontSize + "px";
+        numbers.style.fontSize = fontSize+ "px";
+        area.style.backgroundColor = THEME[theme].bg;
+        area.style.color = THEME[theme].fg;
+    }
+
+
+</script>
+
+<style>
+    *{
+        margin:0;padding:0;box-sizing: border-box;
+    }
+    .editor{
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        margin:20px;
+        padding: 0; 
+    }
+    .editor-area{
+        width:600px;
+        display: flex;
+    }
+    .theme-buttons{
+        display: flex;
+    }
+    .theme-buttons > form{
+        width:100px;
+    }
+    #textarea{
+        width:560px;
+        padding-left:10px;
+    }
+     #line-numbers{
+        width:40px;
+        display: flex;
+        flex-direction: column;
+     }
+    #line-numbers > span{
+        border-left: 10px solid red;
+        padding-left:4px;
+    }
+</style>

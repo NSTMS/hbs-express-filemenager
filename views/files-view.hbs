@@ -15,39 +15,39 @@
     <input type="text" id="addTxtDialogInput" name="addTxtDialogInput" value="">
     <p>dostepne typy: {{fileTypes}}</p>
     <button value="cancel" formmethod="dialog" id="addTxtDialogCloseBtn">zamknij</button>
-    <button formmethod="dialog" id="addTxtDialogSumbitBtn" >dodaj</button>
+    <button formmethod="dialog" id="addTxtDialogSumbitBtn">dodaj</button>
 </dialog>   
 <br>
 <br>
 {{&link link}}
 <div class="files">
-    {{#each files}}
-        <div class="file">
-        {{#if (isDir ../link name)}}   
-        <a href="{{../link}}{{name}}" ><img src={{&img (../link name)}} alt="img"></a>
-        {{else}}
-        {{!-- <form method="GET" action="/file/{{name}}"> --}}
-        <form method="GET" action="/file">
-            <input type="hidden" name="link" value={{../link}}>
-            <input type="hidden" name="name" value={{&json name}}>
-            <button type="submit"><img src={{&img name}} alt="img"></button> 
+  {{#each files}}
+    <div class="file">
+      {{#if (isDir ../link name)}}   
+        <a href="{{../link}}{{name}}"><img src="{{&img ../link name}}" alt="img"></a>
+      {{else}}
+        <form method="POST" action="/file">
+            <input type="hidden" name="name" value="{{name}}">
+          <input type="hidden" name="link" value="{{../link}}">
+          <button type="submit"><img src="{{&img ../link name}}" alt="img"></button>
         </form>
-        {{/if}}
-        <p>{{name}}</p>
+      {{/if}}
+      <p>{{name}}</p>
         <div class="buttons">
-        <form method="POST" action="/editName">
-            <input type="hidden" name={{&json name}} value={{&json name}}>
-            <button type="submit">edit</button> 
-        </form>
-        <form method="POST" action="/remove">
-            <input type="hidden" name="link" value={{../link}}>
-            <input type="hidden" name="name" value={{&json name}}>
-            <button type="submit">x</button> 
-        </form>
+            <form method="POST" action="/editName">
+                <input type="hidden" name="name" value="{{name}}">
+                <button type="submit">edit</button> 
+            </form>
+            <form method="POST" action="/remove">
+                <input type="hidden" name="name" value="{{name}}">
+                <input type="hidden" name="link" value="{{../link}}">
+                <button type="submit">x</button> 
+            </form>
         </div>
-        </div>
-    {{/each}}
+    </div>
+  {{/each}}
 </div>
+
 
 <script>
     //const files = {{&json files}}; 

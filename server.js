@@ -238,25 +238,15 @@ app.post("/changeDirName", function (req, res) {
   let body = req.body;
   const oldPath = path.join(DEFAULT_DIRECTORY, body.link);
   const newPath = whilePathExist(path.join(DEFAULT_DIRECTORY, body.value));
-  console.log(oldPath, newPath);
-  
-  if (!fs.existsSync(newPath)) {
-    fs.rename(oldPath, newPath, (err) => {
-      if (err) {
-        console.log(err);
-        res.redirect("/");
-      } else {
-        res.redirect("/" + body.value);
-      }
-    });
-  } else {
-    console.log("Path already exists");
-    // Handle the case when newPath already exists
-  }
+  const tempPath = newPath.slice(newPath.lastIndexOf("\\")).replace("\\","")
+  fs.rename(oldPath, newPath,(err) => {
+    res.redirect("/" + tempPath)
+  })
+  console.log(tempPath)
 });
 
 
-app.post('/getEditorSettings', function (req, res) {
+app.post('/getEditorSettings', function (req, res) {  
   res.status(200).send(JSON.stringify({theme:THEMES[CURRENT_THEME], fontSize: FONT_SIZE}));
 })
 
@@ -320,7 +310,12 @@ app.get("/*", function (req, res) {
         context.link = "/" + route + "/"
         res.render('files-view.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
     }
-    else res.redirect("/") 
+    else
+    {
+        console.log(route, "nie ma ")
+        res.redirect("/")
+
+    }  
 })
 
 function getAllFiles(dir)

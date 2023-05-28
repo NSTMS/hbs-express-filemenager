@@ -17,6 +17,15 @@
     <button value="cancel" formmethod="dialog" id="addTxtDialogCloseBtn">zamknij</button>
     <button formmethod="dialog" id="addTxtDialogSumbitBtn">dodaj</button>
 </dialog>   
+
+{{#if (homeDir link)}}
+    <button id="editDirName">edit directory name</button>
+{{/if}}
+<dialog id="editDirNameDialog">
+    <input type="text" id="editDirNameDialogInput" name="editDirNameDialogInput" value="">
+    <button value="cancel" formmethod="dialog" id="editDirNameDialogCloseBtn">zamknij</button>
+    <button formmethod="dialog" id="editDirNameDialogSumbitBtn">zatwierdź</button>
+</dialog> 
 <br>
 <br>
 {{&link link}}
@@ -63,6 +72,42 @@
     const addDirDialogSumbitBtn = document.getElementById('addDirDialogSumbitBtn');
     const addDirDialogCloseBtn = document.getElementById('addDirDialogCloseBtn');
     const addDirDialogInput = document.getElementById('addDirDialogInput');
+
+
+    const editDirName = document.getElementById('editDirName');
+    const editDirNameDialog = document.getElementById('editDirNameDialog');
+    const editDirNameDialogInput = document.getElementById('editDirNameDialogInput');
+    const editDirNameDialogCloseBtn = document.getElementById('editDirNameDialogCloseBtn');
+    const editDirNameDialogSumbitBtn = document.getElementById('editDirNameDialogSumbitBtn');
+
+
+    editDirName.addEventListener('click', () => {
+        editDirNameDialog.showModal();
+    });
+    editDirNameDialogCloseBtn.addEventListener('click', () => {
+        editDirNameDialog.close();
+    });
+    editDirNameDialogSumbitBtn.addEventListener('click', () => {
+        if(!editDirNameDialogInput.value) return;
+       const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"     
+            },
+            body: JSON.stringify({value:editDirNameDialogInput.value, link:link})
+        };
+        fetch("/changeDirName", options).then(()=>{
+            editDirNameDialogInput.value = ""
+            editDirNameDialog.close();
+            window.location.reload()
+        }).catch((ex)=>{
+            console.log("coś poszło nie tak : ", ex)
+        }) 
+    });
+
+
+
+
     showTxtDialog.addEventListener('click', () => {
         addTxt.showModal();
     });
@@ -70,6 +115,8 @@
         addTxt.close();
     });
     addTxtDialogSumbitBtn.addEventListener('click', () => {
+        if(!addTxtDialogInput.value) return;
+
        const options = {
             method: "POST",
             headers: {
@@ -92,6 +139,8 @@
         addDir.close();
     });
     addDirDialogSumbitBtn.addEventListener('click', () => {
+        if(!addDirDialogInput.value) return;
+
         const options = {
             method: "POST",
             headers: {

@@ -131,6 +131,9 @@ app.engine('hbs', hbs({
               return false;
             }
             return fs.lstatSync(filepath).isDirectory();
+          },
+          homeDir: (link) =>{
+            return (link == "")? false : true
           }
     },
     extname: '.hbs',
@@ -230,6 +233,29 @@ app.post("/file", function(req,res){
     // link = link.slice(0, link.lastIndexOf("/"))
     // res.redirect((link)? link : "/")
 })
+
+app.post("/changeDirName", function (req, res) {
+  let body = req.body;
+  const oldPath = path.join(DEFAULT_DIRECTORY, body.link);
+  const newPath = whilePathExist(path.join(DEFAULT_DIRECTORY, body.value));
+  console.log(oldPath, newPath);
+  
+  if (!fs.existsSync(newPath)) {
+    fs.rename(oldPath, newPath, (err) => {
+      if (err) {
+        console.log(err);
+        res.redirect("/");
+      } else {
+        res.redirect("/" + body.value);
+      }
+    });
+  } else {
+    console.log("Path already exists");
+    // Handle the case when newPath already exists
+  }
+});
+
+
 app.post('/getEditorSettings', function (req, res) {
   res.status(200).send(JSON.stringify({theme:THEMES[CURRENT_THEME], fontSize: FONT_SIZE}));
 })
@@ -325,7 +351,8 @@ function whilePathExist(filepath){
   while(fs.existsSync(filepath))
   {
       const lastIndex = (filepath).lastIndexOf(".")
-      filepath = (filepath).slice(0, lastIndex).trim() + "_kopia" + (filepath).slice(lastIndex) 
+      if(lastIndex == -1) filepath += "_kopia"
+      else filepath = (filepath).slice(0, lastIndex).trim() + "_kopia" + (filepath).slice(lastIndex) 
   }
   return filepath
 }

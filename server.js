@@ -301,9 +301,8 @@ app.post("/changeDirName", function (req, res) {
   prevPath = body.link
   nextPath = temp + body.value + "/"
   
-  fs.rename(oldPath, newPath,(err) => {
-    console.log("łatwo")
-  })
+  fs.rename(oldPath, newPath,(err) => {})
+  console.log("łatwo, " + newPath)
 
   console.log("old path: " + oldPath, "new path: " + newPath)
   console.log("prev:" + prevPath +  ", next:"+ nextPath, "redirected to: " +"/home" + temp + body.value )
@@ -317,7 +316,7 @@ app.get("/home/*", function (req, res) {
     if(route[0] == "/") route = route.slice(1)
     console.log("=========== HOME/* ================")
 
-    if(fs.existsSync(filepath))
+    if(fs.existsSync(filepath) || route.replaceAll("/","") == nextPath.replaceAll("/",""))
     {
         context.files =getAllFiles(route)
         context.link =  "/" + route + "/"
@@ -327,13 +326,11 @@ app.get("/home/*", function (req, res) {
     {
         console.log("prevPath", prevPath,"nextPath" , nextPath, "route: ",route)
         // console.log(prevPath, nextPath, route)
-        if(route.replaceAll("/","") == prevPath.replaceAll("/","") || route.replaceAll("/","") == nextPath.replaceAll("/","")) 
+        if(route.replaceAll("/","") == prevPath.replaceAll("/","")) 
         {
           console.log("next:", nextPath)
-          if(nextPath[0] == "/") nextPath = nextPath.slice(1)
-          context.files = getAllFiles(route)
-          context.link =  "/" + route + "/"
-          res.render('files-view.hbs', context);
+          if(nextPath[0] == "/") nextPath = nextPath.slice(1);
+          res.redirect("/home/" + nextPath)
         }
         else res.redirect("/home")
     }  

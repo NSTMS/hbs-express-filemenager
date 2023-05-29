@@ -7,6 +7,9 @@ const fs = require('fs');
 const formidable = require('formidable');
 const DEFAULT_DIRECTORY = path.join(__dirname, "files")
 let CURRENT_DIRECTORY = path.join(__dirname, "files")
+let prevPath = ""
+let nextPath = ""
+
 const THEMES = [{
   fg:"#fcfcfc",
   bg:"#343a40"
@@ -116,11 +119,11 @@ app.engine('hbs', hbs({
             let res = "";
             let prev = "";
             for (c of route.split("/")) {
-              if (c == "") res += `<a href="/"> home</a> `;
+              if (c == "") res += `<a href="/home"> home</a> `;
               else {
                 prev += "/" + c;
                 if (prev.startsWith("/")) prev = prev.slice(1);
-                res += `/ <a href="/${prev}">${c}</a> `;
+                res += `/ <a href="home/${prev}">${c}</a> `;
               }
             }
             return res;
@@ -153,14 +156,16 @@ let context = {
     "fileTypes": `".txt",".css",".py",".html",".docx",".xml",".json",".csv",".cpp",".h",".c",".cs",".java",".hbs",".js",".jsx",".php"`
 }
 
-
 app.get("/", function (req, res) {
-    context.files = getAllFiles("/")
-    context.link =""
-    getAllIcons()
-    res.render('files-view.hbs', context); 
+    res.redirect("/home")
 })
 
+app.get("/home", function (req, res) {
+  context.files = getAllFiles("/")
+  context.link =""
+  getAllIcons()
+  res.render('files-view.hbs', context); 
+})
 app.post('/upload', function (req, res) {
     let form = formidable.IncomingForm();
     form.uploadDir = CURRENT_DIRECTORY
@@ -168,13 +173,12 @@ app.post('/upload', function (req, res) {
     form.keepFilenames = true;  
     form.keepExtensions = true;
     form.on ('fileBegin', function(name, file){
-      // console.log(name, req.body.link)
         file.path = path.join(CURRENT_DIRECTORY ,(file.name).trim());        
-        whilePathExist(file.path)
+        file.path = whilePathExist(file.path)
     })
     form.parse(req,function (err, fields, files) {});
     let link = CURRENT_DIRECTORY.replace(DEFAULT_DIRECTORY,"")
-    res.redirect(link.replaceAll("\\","/"))     
+    res.redirect("/home/"+link.replaceAll("\\","/"))     
 });
 
 
@@ -188,7 +192,7 @@ app.post("/upload/dir", function (req, res) {
         console.log("jest");
     }
     // dodaj tutaj obsłużenie wyjatku jeśli plik istnieje
-    res.redirect((req.body.link).replaceAll("\\","/"))
+    res.redirect("/home/"+(req.body.link).replaceAll("\\","/"))
 })
 app.post("/upload/txt", function (req, res) {
     const lastIndex = req.body.value.lastIndexOf(".")
@@ -205,7 +209,7 @@ app.post("/upload/txt", function (req, res) {
     fs.writeFile(filepath, data, (err) => {
         if (err) throw err
     })   
-    res.redirect((req.body.link).replaceAll("\\","/"))
+    res.redirect("/home/"+ (req.body.link).replaceAll("\\","/"))
 })
 
 app.post("/file", function(req,res){
@@ -230,24 +234,19 @@ app.post("/file", function(req,res){
         themes : THEMES
       })
     }
-    // link = link.slice(0, link.lastIndexOf("/"))
-    // res.redirect((link)? link : "/")
 })
 
-app.post("/changeDirName", function (req, res) {
-  let body = req.body;
-  const oldPath = path.join(DEFAULT_DIRECTORY, body.link);
-  const newPath = whilePathExist(path.join(DEFAULT_DIRECTORY, body.value));
-  const tempPath = newPath.slice(newPath.lastIndexOf("\\")).replace("\\","")
-  fs.rename(oldPath, newPath,(err) => {
-    res.redirect("/" + tempPath)
-  })
-  console.log(tempPath)
-});
+
+app.post("/sendCurrentFile", function (req, res) { 
+  const filepath = path.join(CURRENT_DIRECTORY, req.body.name)
+  console.log(filepath,fs.existsSync(filepath))
+  if(fs.existsSync(filepath)) res.sendFile(filepath)
+  else res.redirect("/home")
+})
 
 
 app.post('/getEditorSettings', function (req, res) {  
-  res.status(200).send(JSON.stringify({theme:THEMES[CURRENT_THEME], fontSize: FONT_SIZE}));
+  res.status(200).send(JSON.stringify({theme:CURRENT_THEME, fontSize: FONT_SIZE}));
 })
 
 app.post('/changeFontSize', function (req, res) {
@@ -261,8 +260,10 @@ app.post('/saveThemeChange', function (req, res) {
   res.status(200)
 })
 
-app.post("saveEditorsSettings", function (req, res) {
-  
+app.post("/saveEditorsSettings", function (req, res) {
+  CURRENT_THEME = req.body.theme
+  FONT_SIZE = req.body.fontSize
+  res.status(200)
 })
 
 app.post("/remove", function (req, res) {
@@ -280,7 +281,7 @@ app.post("/remove", function (req, res) {
         }
     }
     const link = body.link.slice(0, body.link.lastIndexOf("/"))
-    res.redirect(link)
+    res.redirect("/home/"+link)
 });
 
 
@@ -300,7 +301,7 @@ const removeFilesFromDir = (dir) =>{
     }
 } 
 
-app.get("/*", function (req, res) {
+app.get("/home/*", function (req, res) {
     const route = req.params[0]
     if(route == "favicon.ico") return;
     const filepath = path.join(DEFAULT_DIRECTORY,route)
@@ -312,11 +313,27 @@ app.get("/*", function (req, res) {
     }
     else
     {
-        console.log(route, "nie ma ")
-        res.redirect("/")
-
+        prevPath = prevPath.replaceAll("/","")
+        console.log(prevPath, nextPath, route)
+        if(route == prevPath) res.redirect("/home/" +nextPath)
+        else res.redirect("/home")
     }  
 })
+
+
+app.post("/changeDirName", function (req, res) {
+  let body = req.body;
+  const oldPath = path.join(DEFAULT_DIRECTORY, body.link);
+  const newPath = whilePathExist(path.join(DEFAULT_DIRECTORY, body.value));
+  const tempPath = newPath.slice(newPath.lastIndexOf("\\")).replace("\\","")
+  console.log(oldPath, newPath)
+  fs.rename(oldPath, newPath,(err) => {
+    prevPath = body.link
+    nextPath = body.value
+    res.redirect("/home/" + tempPath)
+  })
+});
+
 
 function getAllFiles(dir)
 {

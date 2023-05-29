@@ -33,7 +33,7 @@
   {{#each files}}
     <div class="file">
       {{#if (isDir ../link name)}}   
-        <a href="{{../link}}{{name}}"><img src="{{&img ../link name}}" alt="img"></a>
+        <a href="/home/{{../link}}{{name}}"><img src="{{&img ../link name}}" alt="img"></a>
       {{else}}
         <form method="POST" action="/file">
             <input type="hidden" name="name" value="{{name}}">

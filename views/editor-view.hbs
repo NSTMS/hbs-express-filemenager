@@ -12,7 +12,7 @@
             <input type="hidden" name="link" value="{{../link}}">
             <button type="submit">zmien nazwe</button> 
         </form>
-        <form method="POST" action="/editName">
+        <form method="POST" action="/sendCurrentFile">
             <input type="hidden" name="name" value="{{name}}">
             <button type="submit">podglad pliku</button> 
         </form>
@@ -30,10 +30,10 @@
 
 
 <script>
-    let fontSize = ""; 
-    let theme = 0
-    const themes = {{&json THEMES}}
+    let fontSize = 0; 
+    const themes = {{&json themes}}
     console.log(themes)
+    let currTheme = 0
 
     const getLines = () =>{
         numbers.innerHTML = ""
@@ -55,7 +55,7 @@
             headers: {
                 "Content-Type": "application/json"     
             },
-            body: JSON.stringify({fontSize: fontSize, theme: theme})
+            body: JSON.stringify({fontSize: fontSize, theme: currTheme}) // theme to 0,1,2,3
         };
         fetch("/saveEditorsSettings", options).catch(ex => {
             console.log("Coś poszło nie tak:", ex);
@@ -63,14 +63,20 @@
     });
 
      decFontSize.addEventListener("click", (event) => {
-        setFontSizeAndTheme()
-    });
+        fontSize -=1 
+        if(fontSize <= 1) fontSize = 1
+        area.style.fontSize = fontSize + "px";
+        numbers.style.fontSize = fontSize + "px";
+        });
      incFontSize.addEventListener("click", (event) => {
-        area.style.fontSize = data.fontSize + "px";
-        numbers.style.fontSize = data.fontSize + "px";
+        fontSize +=1 
+        area.style.fontSize = fontSize + "px";
+        numbers.style.fontSize = fontSize + "px";
     });
      changeTheme.addEventListener("click", (event) => {
-         
+         currTheme += 1
+         if(currTheme >= 4) currTheme = 0
+            setFontSizeAndTheme(fontSize, currTheme)
     });
 
 
@@ -96,12 +102,14 @@
         getLines()
     }
 
-    function setFontSizeAndTheme(fontSize, theme)
+    function setFontSizeAndTheme(fsize, theme)
     {
-        area.style.fontSize = fontSize + "px";
-        numbers.style.fontSize = fontSize+ "px";
-        area.style.backgroundColor = THEME[theme].bg;
-        area.style.color = THEME[theme].fg;
+        fontSize = fsize
+        currTheme = theme
+        area.style.fontSize = fsize + "px";
+        numbers.style.fontSize = fsize+ "px";
+        area.style.backgroundColor = themes[theme].bg;
+        area.style.color = themes[theme].fg;
     }
 
 
@@ -110,6 +118,9 @@
 <style>
     *{
         margin:0;padding:0;box-sizing: border-box;
+    }
+    :root{
+        
     }
     .editor{
         display: flex;
@@ -121,6 +132,8 @@
     }
     .editor-area{
         width:600px;
+        height: 500px;
+        overflow: auto;
         display: flex;
     }
     .theme-buttons{
@@ -131,7 +144,9 @@
     }
     #textarea{
         width:560px;
+        height: ;
         padding-left:10px;
+        overflow: hidden;
     }
      #line-numbers{
         width:40px;

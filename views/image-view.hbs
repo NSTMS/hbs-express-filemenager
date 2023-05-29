@@ -1,0 +1,71 @@
+<img src="{{src}}" alt="name" id="img">
+{{src}}
+
+<button id="showMenu">show filters</button>
+
+<div class="buttons" id="buttons"></div>
+<script>
+    let hidden = true;
+    const filters = {
+        "grayscale" : "grayscale(100%)",
+        "contrast" : "contrast(300%)",
+        "invert" : "invert(100%)",
+        "sepia" : "sepia(80%)",
+        "saturate" : "saturate(100%)",
+        "hue" : " hue-rotate(180deg)",
+        "none" : "none",
+    }
+        window.addEventListener("load", (event) => {
+            const buttons = document.getElementById("buttons")
+            buttons.innerHTML = ""
+            for(opt of Object.keys(filters))
+            {
+                buttons.innerHTML += `
+                <div class="filter-button">
+                    <img src="{{src}}" alt="name" id="${opt}">
+                    <button onclick="changeImageFilter('${opt}')">${opt}</button>
+                </div>
+                `
+                const smallImg = document.getElementById(opt)
+                smallImg.style.filter = filters[opt]
+            }
+        })
+
+    document.getElementById("showMenu").addEventListener('click', function(){
+        const buttons = document.getElementById("buttons")
+        buttons.style.maxHeight = (hidden) ?  "300px" : "0";
+        hidden = !hidden
+    })
+
+    function changeImageFilter(filter){
+        const img = document.getElementById("img")
+        img.style.filter = filters[filter]
+    }
+</script>
+
+<style>
+    img{
+        width:400px;
+        height:400px;   
+    }
+    .filter-button{
+        display: flex;
+        flex-direction: column;
+        gap:10px;
+        align-items: center;
+    }
+    .filter-button img{
+        width:60px;
+        height:60px;
+        border-radius: 10px;
+    }
+    .buttons{
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s linear;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+
+    }
+</style>

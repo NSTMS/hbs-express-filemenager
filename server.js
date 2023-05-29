@@ -278,7 +278,7 @@ app.post("/remove", function (req, res) {
     if (fs.existsSync(filepath)) {
         if(fs.lstatSync(filepath).isDirectory())
         {
-            fs.rmdir(filepath,{recursive: true, force: true}, (err)=>{
+            fs.rm(filepath,{recursive: true, force: true}, (err)=>{
               if(err) return console.log("err",err);
             })    
         }
@@ -291,37 +291,50 @@ app.post("/remove", function (req, res) {
 });
 
 app.post("/changeDirName", function (req, res) {
+  console.log("===========CHANGE NAME================")
+  
   let body = req.body;
+  let temp = body.link.slice(0,-1)
+  temp = temp.slice(0,temp.lastIndexOf("/")) + "/" // '/nowy/'
   const oldPath = path.join(DEFAULT_DIRECTORY, body.link);
-  let link = body.link.slice(0,-1)
-  link = link.slice(link.lastIndexOf('/'))
-
-  const tempPath = oldPath.slice(oldPath.lastIndexOf("\\")).replace("\\","")
-  const newPath = whilePathExist(path.join(DEFAULT_DIRECTORY, tempPath, body.value));
-  console.log(tempPath, newPath)
+  const newPath = whilePathExist(path.join(DEFAULT_DIRECTORY, temp, body.value));
+  prevPath = body.link
+  nextPath = temp + body.value + "/"
+  
   fs.rename(oldPath, newPath,(err) => {
-    prevPath = body.link
-    nextPath = body.value
-    res.redirect("/home/" + tempPath)
+    console.log("łatwo")
   })
+
+  console.log("old path: " + oldPath, "new path: " + newPath)
+  console.log("prev:" + prevPath +  ", next:"+ nextPath, "redirected to: " +"/home" + temp + body.value )
+  res.redirect("/home" + temp + body.value)
 });
 
-
 app.get("/home/*", function (req, res) {
-    const route = req.params[0]
+    let route = req.params[0]
     if(route == "favicon.ico") return;
     const filepath = path.join(DEFAULT_DIRECTORY,route)
+    if(route[0] == "/") route = route.slice(1)
+    console.log("=========== HOME/* ================")
+
     if(fs.existsSync(filepath))
     {
         context.files =getAllFiles(route)
-        context.link = "/" + route + "/"
+        context.link =  "/" + route + "/"
         res.render('files-view.hbs', context);   // nie podajemy ścieżki tylko nazwę pliku
     }
     else
     {
-        prevPath = prevPath.replaceAll("/","")
+        console.log("prevPath", prevPath,"nextPath" , nextPath, "route: ",route)
         // console.log(prevPath, nextPath, route)
-        if(route == prevPath) res.redirect("/home/" +nextPath)
+        if(route.replaceAll("/","") == prevPath.replaceAll("/","") || route.replaceAll("/","") == nextPath.replaceAll("/","")) 
+        {
+          console.log("next:", nextPath)
+          if(nextPath[0] == "/") nextPath = nextPath.slice(1)
+          context.files = getAllFiles(route)
+          context.link =  "/" + route + "/"
+          res.render('files-view.hbs', context);
+        }
         else res.redirect("/home")
     }  
 })

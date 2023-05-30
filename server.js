@@ -141,6 +141,24 @@ app.engine('hbs', hbs({
           },
           makeLink : (link, name)=>{
             return (link[0] == "/")?link + name: "/" + link + name
+          },
+          editorsLink :(src,name) =>{
+            let route = src.split("/")
+            route.pop()
+            route = route.join("/")
+            if (route.endsWith("/")) route = route.slice(0, -1);
+            CURRENT_DIRECTORY = path.join(DEFAULT_DIRECTORY, route)
+            let res = "";
+            let prev = "";
+            for (c of route.split("/")) {
+              if (c == "") res += `<a href="/home"> home</a> `;
+              else {
+                prev += "/" + c;
+                if (prev.startsWith("/")) prev = prev.slice(1);
+                res += `/ <a href="/home/${prev}">${c}</a> `;
+              }
+            }
+            return res;
           }
     },
     extname: '.hbs',
@@ -194,10 +212,8 @@ app.post("/upload/dir", function (req, res) {
         fs.mkdir(filepath, (err) => {
             if (err) throw err
         })
-        console.log("jest");
     }
     // dodaj tutaj obsłużenie wyjatku jeśli plik istnieje
-    //za duzo ///
     res.redirect("/home"+(req.body.link).replaceAll("\\","/"))
 })
 app.post("/upload/txt", function (req, res) {
@@ -221,7 +237,7 @@ app.post("/upload/txt", function (req, res) {
 app.post("/file", function(req,res){
     let body = req.body
     let link = body.link
-    const name = body.name
+    let name = body.name
     const filepath = path.join(DEFAULT_DIRECTORY, link, name)
     const lastIndex = name.lastIndexOf(".")
     const imagesExtension = ['.png','.jpeg','.jpg','.webp']
@@ -229,26 +245,43 @@ app.post("/file", function(req,res){
     {
       res.render("image-view.hbs", {
         name : name,
+        link : link, 
         src : (link + name).replaceAll("//","/")
       })
     }
     else{
-      const data = fs.readFileSync(filepath, 'utf8');
+      let data
+      console.log(prevPath, nextPath, link+ name)
+      if((link + name).replaceAll("/","") == prevPath.replaceAll("/","")) 
+      {
+        if(nextPath[0] == "/") nextPath = nextPath.slice(1);
+        data =  fs.readFileSync(path.join(DEFAULT_DIRECTORY, nextPath))
+        name = nextPath.slice(nextPath.lastIndexOf("/")+1)
+      }
+      else{
+        data = fs.readFileSync(filepath, 'utf8');
+      }      
       res.render("editor-view.hbs",{
         name : name,
         content: data,
+        src : (link + name).replaceAll("//","/"),
         themes : THEMES
       })
     }
 })
-
 
 app.get("/sendCurrentFile", function (req, res) { 
   const filepath = path.join(CURRENT_DIRECTORY, req.query.name)
   if(fs.existsSync(filepath)) res.sendFile(filepath)
   else res.redirect("/home")
 })
-
+app.post('/saveFileChanges', function (req, res) {  
+  let body = req.body
+  const filepath = path.join(DEFAULT_DIRECTORY, body.src)
+  fs.writeFileSync(filepath, body.content)
+  //link src
+  res.status(200)
+})
 
 app.post('/getEditorSettings', function (req, res) {  
   res.status(200).send(JSON.stringify({theme:CURRENT_THEME, fontSize: FONT_SIZE}));
@@ -274,7 +307,6 @@ app.post("/saveEditorsSettings", function (req, res) {
 app.post("/remove", function (req, res) {
     let body = req.body
     const filepath = path.join(DEFAULT_DIRECTORY, body.link, body.name)
-    console.log(filepath)
     if (fs.existsSync(filepath)) {
         if(fs.lstatSync(filepath).isDirectory())
         {
@@ -291,6 +323,44 @@ app.post("/remove", function (req, res) {
     res.redirect("/home"+link)
 });
 
+app.post("/changeFileName", function (req, res) {
+  // value src
+  let body = req.body;
+  let temp = body.src
+  temp = temp.replaceAll("//","/")
+  temp = temp.slice(0,temp.lastIndexOf("/")) + "/" // '/nowy/'
+  console.log(temp,body.src, body.value)
+  let extension = ""
+  let oldPath = ""
+  let newPath = ""
+
+  extension = body.src.slice(body.src.lastIndexOf("."))
+  oldPath = path.join(DEFAULT_DIRECTORY, body.src);
+  prevPath = body.src
+  
+  if(body.src.includes("/")) 
+  {
+    newPath = path.join(DEFAULT_DIRECTORY, temp, body.value + extension);
+    nextPath = temp + body.value + extension
+  }else 
+  {
+    newPath = path.join(DEFAULT_DIRECTORY, body.value + extension);
+    nextPath = body.value + extension
+  }
+
+  fs.rename(oldPath, newPath,(err) => {
+    const data = fs.readFileSync(newPath, 'utf8');
+    console.log("redirect")
+    // res.render("editor-view.hbs",{
+    //   name : body.value + extension,
+    //   content: data,
+    //   src : (temp + body.value + extension),
+    //   themes : THEMES
+    // })
+    res.redirect("/home"+temp+extension)
+  })
+});
+
 app.post("/changeDirName", function (req, res) {
   let body = req.body;
   let temp = body.link.slice(0,-1)
@@ -300,9 +370,8 @@ app.post("/changeDirName", function (req, res) {
   const newPath = whilePathExist(path.join(DEFAULT_DIRECTORY, temp, body.value));
   prevPath = body.link.replaceAll("//","/")
   nextPath = temp + body.value
-  console.log("old path: " + oldPath, "new path: " + newPath, "temp", temp)
-  console.log("prev:" + prevPath +  ", next:"+ nextPath, "redirected to: " +"/home" + temp + body.value )
-  
+  // console.log("old path: " + oldPath, "new path: " + newPath, "temp", temp)
+  // console.log("prev:" + prevPath +  ", next:"+ nextPath, "redirected to: " +"/home" + temp + body.value )
   fs.rename(oldPath, newPath,(err) => {
     res.redirect("/home" + temp + body.value)
   })

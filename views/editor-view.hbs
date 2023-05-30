@@ -1,4 +1,4 @@
-{{name}}
+<a>{{&editorsLink src name}}/ {{name}}</a>
 <div class="action-buttons">
         <div class="theme-buttons">
             <button id="font-size-dec">font -</button>
@@ -6,30 +6,27 @@
             <button id="font-size-inc">font +</button>
         </div>
         <button id="saveSettings">zapisz ustawienia</button> 
-
-        <form method="POST" action="/editName">
-            <input type="hidden" name="name" value="{{name}}">
-            <input type="hidden" name="link" value="{{../link}}">
-            <button type="submit">zmien nazwe</button> 
-        </form>
-        <a href="{{name}}" target="_blank">pogląd pliku</a>
+        <button id="editDirName">zmien nazwe</button>
+        <dialog id="editDirNameDialog">
+            <input type="text" id="editDirNameDialogInput" name="editDirNameDialogInput" value="">
+            <button value="cancel" formmethod="dialog" id="editDirNameDialogCloseBtn">zamknij</button>
+            <button formmethod="dialog" id="editDirNameDialogSumbitBtn">zatwierdź</button>
+        </dialog> 
+        <a href="{{src}}" target="_blank">pogląd pliku</a>
 </div>
 <div class="editor" id="editor">
     <div class="editor-area">
         <div id="line-numbers"></div>
         <textarea name="textarea" id="textarea">{{content}}</textarea>
     </div>
-    <form method="POST" action="/editName">
-        <input type="hidden" name="name" value="{{name}}">
-        <button type="submit">zapisz zmiany</button> 
-    </form>
+    <button type="submit" id="sumbitFileChangesBtn">zapisz zmiany</button> 
 </div>
 
 
 <script>
     let fontSize = 0; 
     const themes = {{&json themes}}
-    console.log(themes)
+    const src = "{{src}}"
     let currTheme = 0
 
     const getLines = () =>{
@@ -98,6 +95,67 @@
     area.onkeyup = function () {
         getLines()
     }
+
+    document.getElementById("sumbitFileChangesBtn").addEventListener("click",() =>{
+         const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"     
+            },
+            body: JSON.stringify({content : area.value, src : src})
+        };
+      fetch("/saveFileChanges", options).catch(ex => {
+            console.log("Coś poszło nie tak:", ex);
+        });
+    })
+
+    
+    const editDirName = document.getElementById('editDirName');
+    const editDirNameDialog = document.getElementById('editDirNameDialog');
+    const editDirNameDialogInput = document.getElementById('editDirNameDialogInput');
+    const editDirNameDialogCloseBtn = document.getElementById('editDirNameDialogCloseBtn');
+    const editDirNameDialogSumbitBtn = document.getElementById('editDirNameDialogSumbitBtn');
+    
+    editDirName.addEventListener('click', () => {
+        editDirNameDialog.showModal();
+    });
+    editDirNameDialogCloseBtn.addEventListener('click', () => {
+        editDirNameDialog.close();
+    });
+    editDirNameDialogSumbitBtn.addEventListener('click', () => {
+        if(!editDirNameDialogInput.value) return;
+       const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"     
+            },
+            body: JSON.stringify({value:editDirNameDialogInput.value, src:src})
+        };
+        fetch("/changeFileName", options).then(()=>{
+            editDirNameDialogInput.value = ""
+            editDirNameDialog.close();
+            window.location.reload()
+        }).catch((ex)=>{
+            console.log("coś poszło nie tak : ", ex)
+        }) 
+    });
+
+    
+    document.getElementById("sumbitRenameFileBtn").addEventListener("click",() =>{
+         const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"     
+            },
+            body: JSON.stringify({content : area.value, src : src})
+        };
+      fetch("/changeFileName", options).catch(ex => {
+            console.log("Coś poszło nie tak:", ex);
+        });
+    })
+
+    
+
 
     function setFontSizeAndTheme(fsize, theme)
     {

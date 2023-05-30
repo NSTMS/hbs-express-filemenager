@@ -287,26 +287,25 @@ app.post("/remove", function (req, res) {
         }
     }
     const link = body.link.slice(0, body.link.lastIndexOf("/"))
+
     res.redirect("/home"+link)
 });
 
 app.post("/changeDirName", function (req, res) {
-  console.log("===========CHANGE NAME================")
-  
   let body = req.body;
   let temp = body.link.slice(0,-1)
+  temp = temp.replaceAll("//","/")
   temp = temp.slice(0,temp.lastIndexOf("/")) + "/" // '/nowy/'
   const oldPath = path.join(DEFAULT_DIRECTORY, body.link);
   const newPath = whilePathExist(path.join(DEFAULT_DIRECTORY, temp, body.value));
-  prevPath = body.link
-  nextPath = temp + body.value + "/"
-  
-  fs.rename(oldPath, newPath,(err) => {})
-  console.log("łatwo, " + newPath)
-
-  console.log("old path: " + oldPath, "new path: " + newPath)
+  prevPath = body.link.replaceAll("//","/")
+  nextPath = temp + body.value
+  console.log("old path: " + oldPath, "new path: " + newPath, "temp", temp)
   console.log("prev:" + prevPath +  ", next:"+ nextPath, "redirected to: " +"/home" + temp + body.value )
-  res.redirect("/home" + temp + body.value)
+  
+  fs.rename(oldPath, newPath,(err) => {
+    res.redirect("/home" + temp + body.value)
+  })
 });
 
 app.get("/home/*", function (req, res) {
@@ -314,7 +313,6 @@ app.get("/home/*", function (req, res) {
     if(route == "favicon.ico") return;
     const filepath = path.join(DEFAULT_DIRECTORY,route)
     if(route[0] == "/") route = route.slice(1)
-    console.log("=========== HOME/* ================")
 
     if(fs.existsSync(filepath) || route.replaceAll("/","") == nextPath.replaceAll("/",""))
     {
@@ -324,19 +322,14 @@ app.get("/home/*", function (req, res) {
     }
     else
     {
-        console.log("prevPath", prevPath,"nextPath" , nextPath, "route: ",route)
-        // console.log(prevPath, nextPath, route)
         if(route.replaceAll("/","") == prevPath.replaceAll("/","")) 
         {
-          console.log("next:", nextPath)
           if(nextPath[0] == "/") nextPath = nextPath.slice(1);
           res.redirect("/home/" + nextPath)
         }
         else res.redirect("/home")
     }  
 })
-
-
 
 
 function getAllFiles(dir)

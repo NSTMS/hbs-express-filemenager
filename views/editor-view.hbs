@@ -1,18 +1,20 @@
-<a>{{&editorsLink src name}}/ {{name}}</a>
+<p>{{&editorsLink src name}}/ {{name}}</p>
 <div class="action-buttons">
         <div class="theme-buttons">
             <button id="font-size-dec">font -</button>
             <button id="theme-change">theme change</button>
             <button id="font-size-inc">font +</button>
         </div>
-        <button id="saveSettings">zapisz ustawienia</button> 
-        <button id="editDirName">zmien nazwe</button>
+        <div>
+            <button id="saveSettings">zapisz ustawienia</button> 
+            <button id="editDirName">zmien nazwe</button>
+            <a href="{{src}}" target="_blank">pogląd pliku</a>
+        </div>
         <dialog id="editDirNameDialog">
             <input type="text" id="editDirNameDialogInput" name="editDirNameDialogInput" value="">
             <button value="cancel" formmethod="dialog" id="editDirNameDialogCloseBtn">zamknij</button>
             <button formmethod="dialog" id="editDirNameDialogSumbitBtn">zatwierdź</button>
         </dialog> 
-        <a href="{{src}}" target="_blank">pogląd pliku</a>
 </div>
 <div class="editor" id="editor">
     <div class="editor-area">

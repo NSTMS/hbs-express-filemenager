@@ -1,4 +1,4 @@
-{{title}}
+<div class="body">
 <form enctype="multipart/form-data" method="POST" action="/upload">
     <input type="file" multiple required accept="*" name="filetoupload">
     <button type="submit">upload</button>
@@ -33,7 +33,7 @@
   {{#each files}}
     <div class="file">
       {{#if (isDir ../link name)}}   
-        <a href="/home{{&makeLink ../link name}}"><img src="{{&img ../link name}}" alt="img"></a>
+        <a href="/home{{&makeLink ../link name}}"><img style="width:60px;height:60px;" src="{{&img ../link name}}" alt="img"></a>
       {{else}}
         <form method="POST" action="/file">
             <input type="hidden" name="name" value="{{name}}">
@@ -42,21 +42,15 @@
         </form>
       {{/if}}
       <p>{{name}}</p>
-        <div class="buttons">
-            <form method="POST" action="/editName">
-                <input type="hidden" name="name" value="{{name}}">
-                <button type="submit">edit</button> 
-            </form>
             <form method="POST" action="/remove">
                 <input type="hidden" name="name" value="{{name}}">
                 <input type="hidden" name="link" value="{{../link}}">
                 <button type="submit">x</button> 
             </form>
-        </div>
     </div>
   {{/each}}
 </div>
-
+</div>
 
 <script>
     //const files = {{&json files}}; 

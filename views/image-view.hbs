@@ -1,9 +1,21 @@
-<img src="{{src}}" alt="name" id="img">
-{{src}}
+<div class="body">
+    <div class="side-panel">
+        <button id="showMenu">show filters</button tton>
+    </div>
+    <div class="buttons" id="buttons"></div>
+    <div class="main-panel">
+        {{&link link name}}
+        <div class="img-with-filters">
+            <img src="{{src}}" alt="name" id="img">
+        </div>
+    </div>
+</div>
 
-<button id="showMenu">show filters</button>
 
-<div class="buttons" id="buttons"></div>
+
+
+
+
 <script>
     let hidden = true;
     const filters = {
@@ -22,7 +34,7 @@
             {
                 buttons.innerHTML += `
                 <div class="filter-button">
-                    <img src="{{src}}" alt="name" id="${opt}">
+                    <img src="{{src}}" alt="name" id="${opt}" style='height:calc(100% / 7 - 10px);width:calc(100% / 7 - 10px)'>
                     <button onclick="changeImageFilter('${opt}')">${opt}</button>
                 </div>
                 `
@@ -33,7 +45,7 @@
 
     document.getElementById("showMenu").addEventListener('click', function(){
         const buttons = document.getElementById("buttons")
-        buttons.style.maxHeight = (hidden) ?  "300px" : "0";
+        buttons.style.width = (hidden) ?  "300px" : "0";
         hidden = !hidden
     })
 
@@ -55,16 +67,16 @@
         align-items: center;
     }
     .filter-button img{
-        width:60px;
-        height:60px;
         border-radius: 10px;
     }
     .buttons{
-        max-height: 0;
+        height:calc(100% - 80px);
+        background-color: #2f3e46;
+        width: 0;
         overflow: hidden;
-        transition: max-height 0.2s linear;
+        transition: width 0.2s linear;
         display: flex;
-        flex-wrap: wrap;
+        flex-direction: column;
         gap: 20px;
 
     }

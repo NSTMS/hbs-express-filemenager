@@ -1,28 +1,33 @@
-<p>{{&editorsLink src name}}/ {{name}}</p>
-<div class="action-buttons">
+<dialog id="editDirNameDialog">
+    <input type="text" id="editDirNameDialogInput" name="editDirNameDialogInput" value="">
+    <button value="cancel" formmethod="dialog" id="editDirNameDialogCloseBtn">zamknij</button>
+    <button formmethod="dialog" id="editDirNameDialogSumbitBtn">zatwierdź</button>
+</dialog> 
+<div class="body">
+    <div class="side-panel">
         <div class="theme-buttons">
             <button id="font-size-dec">font -</button>
             <button id="theme-change">theme change</button>
             <button id="font-size-inc">font +</button>
         </div>
-        <div>
+        <div class="function-buttons">
             <button id="saveSettings">zapisz ustawienia</button> 
             <button id="editDirName">zmien nazwe</button>
             <a href="{{src}}" target="_blank">pogląd pliku</a>
         </div>
-        <dialog id="editDirNameDialog">
-            <input type="text" id="editDirNameDialogInput" name="editDirNameDialogInput" value="">
-            <button value="cancel" formmethod="dialog" id="editDirNameDialogCloseBtn">zamknij</button>
-            <button formmethod="dialog" id="editDirNameDialogSumbitBtn">zatwierdź</button>
-        </dialog> 
-</div>
-<div class="editor" id="editor">
-    <div class="editor-area">
-        <div id="line-numbers"></div>
-        <textarea name="textarea" id="textarea">{{content}}</textarea>
     </div>
-    <button type="submit" id="sumbitFileChangesBtn">zapisz zmiany</button> 
+    <div class="main-panel">
+        <p>{{&editorsLink src name}}/ {{name}}</p>
+        <div class="editor" id="editor">
+            <div class="editor-area">
+                <div id="line-numbers"></div>
+                <textarea name="textarea" id="textarea">{{content}}</textarea>
+            </div>
+            <button type="submit" id="sumbitFileChangesBtn">zapisz zmiany</button> 
+        </div>
+    </div>
 </div>
+
 
 
 <script>
@@ -33,9 +38,12 @@
 
     const getLines = () =>{
         numbers.innerHTML = ""
+        let num = 0
             area.value.split("\n").forEach((line,i)=>{
+                num+=1
                 numbers.innerHTML += `<span>${i+1}</span>`
         })
+        area.rows = num
     }
 
     const area = document.getElementById("textarea")
@@ -66,6 +74,8 @@
         });
      incFontSize.addEventListener("click", (event) => {
         fontSize +=1 
+        if(fontSize >= 50) fontSize = 50
+
         area.style.fontSize = fontSize + "px";
         numbers.style.fontSize = fontSize + "px";
     });
@@ -154,9 +164,7 @@
       fetch("/changeFileName", options).catch(ex => {
             console.log("Coś poszło nie tak:", ex);
         });
-    })
-
-    
+    })  
 
 
     function setFontSizeAndTheme(fsize, theme)
@@ -176,34 +184,23 @@
     *{
         margin:0;padding:0;box-sizing: border-box;
     }
-    :root{
-        
-    }
-    .editor{
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-        align-items: center;
-        margin:20px;
-        padding: 0; 
-    }
     .editor-area{
         width:600px;
         height: 500px;
         overflow: auto;
         display: flex;
     }
-    .theme-buttons{
-        display: flex;
-    }
-    .theme-buttons > form{
-        width:100px;
-    }
     #textarea{
         width:560px;
-        height: ;
-        padding-left:10px;
+        min-height:100%;
+        height: fit-content;
+        white-space: pre;
         overflow: hidden;
+        resize: none;
+    }
+    #textarea:focus{
+        outline:none;
+        border: none;
     }
      #line-numbers{
         width:40px;
@@ -211,7 +208,8 @@
         flex-direction: column;
      }
     #line-numbers > span{
-        border-left: 10px solid red;
+        border-left: 10px solid #2f3e46;
         padding-left:4px;
+        padding-right:4px;
     }
 </style>

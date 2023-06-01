@@ -1,55 +1,64 @@
-<div class="body">
-<form enctype="multipart/form-data" method="POST" action="/upload">
-    <input type="file" multiple required accept="*" name="filetoupload">
-    <button type="submit">upload</button>
-</form>
-<button id="showDirDialog">add new folder</button>
-<dialog id="addDir">
-    <input type="text" id="addDirDialogInput" name="addDirDialogInput" value="">
-    <button value="cancel" formmethod="dialog" id="addDirDialogCloseBtn">zamknij</button>
-    <button formmethod="dialog" id="addDirDialogSumbitBtn">dodaj</button>
-</dialog>
-
-<button id="showTxtDialog">add new txt file</button>
 <dialog id="addTxt">
     <input type="text" id="addTxtDialogInput" name="addTxtDialogInput" value="">
     <p>dostepne typy: {{fileTypes}}</p>
     <button value="cancel" formmethod="dialog" id="addTxtDialogCloseBtn">zamknij</button>
     <button formmethod="dialog" id="addTxtDialogSumbitBtn">dodaj</button>
 </dialog>   
-
-{{#if (homeDir link)}}
-    <button id="editDirName">edit directory name</button>
-{{/if}}
 <dialog id="editDirNameDialog">
     <input type="text" id="editDirNameDialogInput" name="editDirNameDialogInput" value="">
     <button value="cancel" formmethod="dialog" id="editDirNameDialogCloseBtn">zamknij</button>
     <button formmethod="dialog" id="editDirNameDialogSumbitBtn">zatwierdź</button>
 </dialog> 
-<br>
-<br>
-{{&link link}}
-<div class="files">
-  {{#each files}}
-    <div class="file">
-      {{#if (isDir ../link name)}}   
-        <a href="/home{{&makeLink ../link name}}"><img style="width:60px;height:60px;" src="{{&img ../link name}}" alt="img"></a>
-      {{else}}
-        <form method="POST" action="/file">
-            <input type="hidden" name="name" value="{{name}}">
-          <input type="hidden" name="link" value="{{../link}}">
-          <button type="submit"><img src="{{&img ../link name}}" alt="img"></button>
+<dialog id="addDir">
+    <input type="text" id="addDirDialogInput" name="addDirDialogInput" value="">
+    <button value="cancel" formmethod="dialog" id="addDirDialogCloseBtn">zamknij</button>
+    <button formmethod="dialog" id="addDirDialogSumbitBtn">dodaj</button>
+</dialog>
+
+
+<div class="body">
+    <div class="side-panel">
+        <form enctype="multipart/form-data" method="POST" action="/upload">
+            <label for="filetoupload">select file</label>
+            <input type="file" multiple required accept="*" name="filetoupload" id="filetoupload">
+            <button type="submit">upload</button>
         </form>
-      {{/if}}
-      <p>{{name}}</p>
-            <form method="POST" action="/remove">
-                <input type="hidden" name="name" value="{{name}}">
-                <input type="hidden" name="link" value="{{../link}}">
-                <button type="submit">x</button> 
-            </form>
+
+        <div class="side-panel-buttons">
+            <button id="showDirDialog">add new folder</button>
+            <button id="showTxtDialog">add new txt file</button>
+            {{#if (homeDir link)}}
+                <button id="editDirName">edit directory name</button>
+            {{/if}}
+        </div>
     </div>
-  {{/each}}
-</div>
+    <div class="main-panel">
+        {{&link link}}
+        <div class="files">
+        {{#each files}}
+            <div class="file">
+            {{#if (isDir ../link name)}}   
+                <a href="/home{{&makeLink ../link name}}"><img style="width:60px;height:60px;" src="{{&img ../link name}}" alt="img"></a>
+            {{else}}
+                <form method="POST" action="/file">
+                    <input type="hidden" name="name" value="{{name}}">
+                <input type="hidden" name="link" value="{{../link}}">
+                <button type="submit"><img src="{{&img ../link name}}" alt="img"></button>
+                </form>
+            {{/if}}
+            <p>{{name}}</p>
+                    <form method="POST" action="/remove">
+                        <input type="hidden" name="name" value="{{name}}">
+                        <input type="hidden" name="link" value="{{../link}}">
+                        <button type="submit">x</button> 
+                    </form>
+            </div>
+        {{/each}}
+        </div>
+
+    </div>
+
+
 </div>
 
 <script>

@@ -16,6 +16,13 @@ nav{
     display: flex;
     align-items: center;
 }
+nav a{
+    font-size:30px;
+    font-weight: bold;
+    color:#cad2c5;
+
+    
+}
 .body{
     display: flex;
     max-height:calc(100%  - 80px);

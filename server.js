@@ -269,6 +269,25 @@ app.post("/file", function(req,res){
       })
     }
 })
+app.get('/getFilters', function(req, res){
+  const filters = {
+    "grayscale" : "grayscale(100%)",
+    "contrast" : "contrast(300%)",
+    "invert" : "invert(100%)",
+    "sepia" : "sepia(80%)",
+    "saturate" : "saturate(100%)",
+    "hue" : " hue-rotate(180deg)",
+    "none" : "none",
+  }
+  res.send(JSON.stringify(filters))
+})
+app.post("/saveImage",function(req,res){
+  let data = req.body.dataUrl
+  console.log(data)
+  const buffer = Buffer.from(data, 'base64');
+  fs.writeFileSync("path_to_our_image_file.jpeg", buffer);
+})
+
 
 app.get("/sendCurrentFile", function (req, res) { 
   const filepath = path.join(CURRENT_DIRECTORY, req.query.name)

@@ -76,41 +76,6 @@
     const addDirDialogCloseBtn = document.getElementById('addDirDialogCloseBtn');
     const addDirDialogInput = document.getElementById('addDirDialogInput');
 
-
-    const editDirName = document.getElementById('editDirName');
-    const editDirNameDialog = document.getElementById('editDirNameDialog');
-    const editDirNameDialogInput = document.getElementById('editDirNameDialogInput');
-    const editDirNameDialogCloseBtn = document.getElementById('editDirNameDialogCloseBtn');
-    const editDirNameDialogSumbitBtn = document.getElementById('editDirNameDialogSumbitBtn');
-
-
-    editDirName.addEventListener('click', () => {
-        editDirNameDialog.showModal();
-    });
-    editDirNameDialogCloseBtn.addEventListener('click', () => {
-        editDirNameDialog.close();
-    });
-    editDirNameDialogSumbitBtn.addEventListener('click', () => {
-        if(!editDirNameDialogInput.value) return;
-       const options = {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"     
-            },
-            body: JSON.stringify({value:editDirNameDialogInput.value, link:link})
-        };
-        fetch("/changeDirName", options).then(()=>{
-            editDirNameDialogInput.value = ""
-            editDirNameDialog.close();
-            window.location.reload()
-        }).catch((ex)=>{
-            console.log("coś poszło nie tak : ", ex)
-        }) 
-    });
-
-
-
-
     showTxtDialog.addEventListener('click', () => {
         addTxt.showModal();
     });
@@ -159,5 +124,39 @@
             console.log("coś poszło nie tak : ", ex)
         }) 
     });
+
+
+
+    const editDirName = document.getElementById('editDirName');
+    const editDirNameDialog = document.getElementById('editDirNameDialog');
+    const editDirNameDialogInput = document.getElementById('editDirNameDialogInput');
+    const editDirNameDialogCloseBtn = document.getElementById('editDirNameDialogCloseBtn');
+    const editDirNameDialogSumbitBtn = document.getElementById('editDirNameDialogSumbitBtn');
+
+
+    editDirName.addEventListener('click', () => {
+        editDirNameDialog.showModal();
+    });
+    editDirNameDialogCloseBtn.addEventListener('click', () => {
+        editDirNameDialog.close();
+    });
+    editDirNameDialogSumbitBtn.addEventListener('click', () => {
+        if(!editDirNameDialogInput.value) return;
+       const options = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"     
+            },
+            body: JSON.stringify({value:editDirNameDialogInput.value, link:link})
+        };
+        fetch("/changeDirName", options).then(()=>{
+            editDirNameDialogInput.value = ""
+            editDirNameDialog.close();
+            window.location.reload()
+        }).catch((ex)=>{
+            console.log("coś poszło nie tak : ", ex)
+        }) 
+    });
+
 
 </script>

@@ -282,10 +282,19 @@ app.get('/getFilters', function(req, res){
   res.send(JSON.stringify(filters))
 })
 app.post("/saveImage",function(req,res){
-  let data = req.body.dataUrl
-  console.log(data)
-  const buffer = Buffer.from(data, 'base64');
-  fs.writeFileSync("path_to_our_image_file.jpeg", buffer);
+  let form = formidable.IncomingForm();
+  form.uploadDir = CURRENT_DIRECTORY
+  form.keepExtensions = true;
+  form.on ('fileBegin', function(name, file){
+      file.path = path.join(CURRENT_DIRECTORY ,(file.name).trim());        
+      file.path = whilePathExist(file.path)
+  })
+  form.parse(req,function (err, fields, files) {});
+
+  // let data = req.body.dataUrl
+  // console.log(data)
+  // const base64 = fs.readFileSync(req.body.dataUrl, {encode: 'base64'})
+  // fs.writeFileSync("path_to_our_image_file.jpeg", base64);
 })
 
 

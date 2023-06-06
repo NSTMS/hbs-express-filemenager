@@ -10,6 +10,7 @@
         </div>
         <div class="img-with-filters">
             <img src="{{src}}" alt="name" id="img">
+            <canvas id="canvas" style="display:none;"></canvas>
         </div>
     </div>
 </div>
@@ -17,106 +18,102 @@
 <script>
     let hidden = true;
     let filters = {}
-        window.addEventListener("load", (event) => {
-            const options = {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json"     
-                },
-            };
+    const canvas = document.getElementById('canvas')
+    const context = canvas.getContext('2d')
+    window.addEventListener("load", (event) => {
+        const options = {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        };
 
-            fetch("/getFilters", options).then(res => res.json()).then(data =>{
-                filters = data
-                const buttons = document.getElementById("buttons")
-                buttons.innerHTML = ""
-                for(opt of Object.keys(filters))
-                {
-                    buttons.innerHTML += `
+        fetch("/getFilters", options).then(res => res.json()).then(data => {
+            filters = data
+            const buttons = document.getElementById("buttons")
+            buttons.innerHTML = ""
+            for (opt of Object.keys(filters)) {
+                buttons.innerHTML += `
                     <div class="filter-button">
                         <img src="{{src}}" alt="name" id="${opt}">
                         <button onclick="changeImageFilter('${opt}')">${opt}</button>
                     </div>
                     `
-                    const smallImg = document.getElementById(opt)
-                    smallImg.style.filter = filters[opt]
-                }
-            }).catch(ex => {
-                console.log("Coś poszło nie tak:", ex);
-            });
+                const smallImg = document.getElementById(opt)
+                smallImg.style.filter = filters[opt]
+            }
+        }).catch(ex => {
+            console.log("Coś poszło nie tak:", ex);
+        });
 
-           
-        })
-
-    document.getElementById("showMenu").addEventListener('click', function(){
-        const buttons = document.getElementById("buttons")
-        buttons.style.width = (hidden) ?  "400px" : "0";
-        hidden = !hidden
-    })
-
-    document.getElementById("saveFile").addEventListener('click', function(){
-        const canvas = document.createElement('canvas')
-        const context = canvas.getContext('2d')
         const img = document.getElementById('img')
         console.log(img.src)
         let image = new Image()
-        image.src = img.src 
-        image.onload = () =>{
+        image.onload = () => {
             canvas.width = 800 // testowa szerokość, docelowo trzeba zamienić na rzeczywistą szerokość obrazka
             canvas.height = 400 // testowa wysokość, docelowo trzeba zamienić na rzeczywistą wysokość obrazka
             context.filter = "grayscale(100%)"; // przykładowy filtr
             context.drawImage(image, 0, 0, canvas.width, canvas.height); // obrazek z filtrem widocznym na canvasie
         }
-        let dataUrl = canvas.toDataURL("image/jpeg")
-        const body = JSON.stringify({
-            dataUrl: dataUrl,
-            path: "", // tu ma byc sformatowany src
-            extension : ""// rozszerzenie wzięte z src
+        image.src = img.src
 
+
+    })
+
+    document.getElementById("showMenu").addEventListener('click', function () {
+        const buttons = document.getElementById("buttons")
+        buttons.style.width = (hidden) ? "400px" : "0";
+        hidden = !hidden
+    })
+
+    document.getElementById("saveFile").addEventListener('click', function () {
+        let dataUrl = canvas.toBlob((blob) => {
+            const formData = new FormData()
+            formData.append('image', blob, "filename.png")
+            formData.append('name', "losowanazwa.png")
+            const options = {
+                method: "POST",
+                body: formData
+            };
+            fetch("/saveImage", options)
         })
-        const options = {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"     
-            },
-            body: body
-        };
 
-        fetch("/saveImage", options)
-        .then(response => response.json())
-        .then(
-            data => {
-                console.log("plik zapisany")
-            }
-        )
     })
 
 
-    function changeImageFilter(filter){
+    function changeImageFilter(filter) {
         const img = document.getElementById("img")
         img.style.filter = filters[filter]
+
+        context.filter = filters[filter] // przykładowy filtr
+        context.drawImage(img, 0, 0, canvas.width, canvas.height); // obrazek z filtrem widocznym na canvasie
+
     }
-</script>   
+</script>
 
 <style>
-    .side-panel{
+    .side-panel {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding:20px;
-        gap:20px;
+        padding: 20px;
+        gap: 20px;
     }
-    .img-with-filters> img{
-        margin-left:20px;
-        width:600px;
-        height:400px;   
+
+    .img-with-filters>img {
+        margin-left: 20px;
+        width: 600px;
+        height: 400px;
         object-fit: cover;
     }
-    .link{
-        margin-left:20px;
-        margin-top:10px;
+
+    .link {
+        margin-left: 20px;
+        margin-top: 10px;
         margin-bottom: 10px;
     }
-    .buttons{
+
+    .buttons {
         /*height:calc(100% - 80px); */
         background-color: #2f3e46;
         width: 0;
@@ -128,29 +125,30 @@
         gap: 10px;
 
     }
-    .filter-button{
+
+    .filter-button {
         display: flex;
         flex-direction: column;
-        gap:10px;
+        gap: 10px;
         align-items: center;
     }
-    .filter-button img{
-        width:calc(100% /7);
+
+    .filter-button img {
+        width: calc(100% /7);
         aspect-ratio: 1;
         border-radius: 10px;
     }
-    
-    .filter-button button{
-        font-size:10px;
+
+    .filter-button button {
+        font-size: 10px;
         border: none;
-        outline:none;
+        outline: none;
         background-color: #2d2d2d;
-        color:#cad2c5;
+        color: #cad2c5;
         border-radius: 5px;
         cursor: pointer;
-        padding:5px;
+        padding: 5px;
         padding-left: 10px;
         padding-right: 10px;
     }
-    
 </style>

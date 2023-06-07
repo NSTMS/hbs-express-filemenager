@@ -287,10 +287,11 @@ app.post("/saveImage",function(req,res){
   form.keepExtensions = true;
   form.on ('fileBegin', function(name, file){
       file.path = path.join(CURRENT_DIRECTORY ,(file.name).trim());        
-      file.path = whilePathExist(file.path)
+      // file.path = whilePathExist(file.path)
+      console.log(file.path )
   })
   form.parse(req,function (err, fields, files) {});
-
+  console.log('zapisano')
   // let data = req.body.dataUrl
   // console.log(data)
   // const base64 = fs.readFileSync(req.body.dataUrl, {encode: 'base64'})

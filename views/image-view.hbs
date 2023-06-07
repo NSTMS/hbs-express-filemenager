@@ -50,9 +50,9 @@
         console.log(img.src)
         let image = new Image()
         image.onload = () => {
-            canvas.width = 800 // testowa szerokość, docelowo trzeba zamienić na rzeczywistą szerokość obrazka
-            canvas.height = 400 // testowa wysokość, docelowo trzeba zamienić na rzeczywistą wysokość obrazka
-            context.filter = "grayscale(100%)"; // przykładowy filtr
+            canvas.width = img.width // testowa szerokość, docelowo trzeba zamienić na rzeczywistą szerokość obrazka
+            canvas.height = img.height // testowa wysokość, docelowo trzeba zamienić na rzeczywistą wysokość obrazka
+            context.filter = "none"; // przykładowy filtr
             context.drawImage(image, 0, 0, canvas.width, canvas.height); // obrazek z filtrem widocznym na canvasie
         }
         image.src = img.src
@@ -69,7 +69,14 @@
     document.getElementById("saveFile").addEventListener('click', function () {
         let dataUrl = canvas.toBlob((blob) => {
             const formData = new FormData()
-            formData.append('image', blob, "filename.png")
+            
+            let name ={{&json name}}
+            const extenstion = name.slice(name.lastIndexOf("."))
+            name = name.slice(0,name.lastIndexOf("/"))
+            let filename = name.slice(0,name.lastIndexOf("."))
+
+            console.log(filename, extenstion)
+            formData.append('image', blob, filename+extenstion)
             formData.append('name', "losowanazwa.png")
             const options = {
                 method: "POST",
